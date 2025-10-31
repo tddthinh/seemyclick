@@ -1,0 +1,35 @@
+---
+description: Windows Ops helpers for Cursor (token-lean, CMD/PowerShell only).
+---
+# Execution Wrapper (PowerShell)
+# Use for any CLI you demonstrate.
+# Start-Job -> Wait-Job with timeout -> Stop-Job on timeout -> Receive-Job
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+function Invoke-WithTimeout {
+  param([string]$Command, [int]$Seconds = 30)
+  $job = Start-Job -ScriptBlock { param($c) powershell -NoProfile -Command $c } -ArgumentList $Command
+  if (-not (Wait-Job -Job $job -Timeout $Seconds)) { Stop-Job $job; Write-Error "Timeout after $Seconds s" }
+  Receive-Job $job
+  Remove-Job $job
+}
+
+# Token-Aware Sampling
+# Head lines: Get-Content path -TotalCount N
+# Line count: (Get-Content path).Length
+# First N bytes (approx): [System.IO.File]::OpenRead('path').Read((New-Object byte[] N),0,N)
+# Safe text preview: Get-Content path -TotalCount 200 | Out-String
+
+# Environment & Non-Interactive
+# Session env:  $env:DEBIAN_FRONTEND = 'noninteractive'   # if a tool honors it on Windows
+# Persist env:  setx NAME VALUE
+# Fail-fast:    $ErrorActionPreference='Stop'; Set-StrictMode -Version Latest
+
+# Time & Logs
+# Timezone (VN): [TimeZoneInfo]::ConvertTimeBySystemTimeZoneId([DateTime]::UtcNow,'SE Asia Standard Time')
+# Log fusion: redirect 2>&1 where supported, or capture via Invoke-WithTimeout and Out-String
+
+# Ground Rules
+Use only Windows CMD/PowerShell syntax in examples.
+Do not remove/rename files unless required for the feature and reversible via VCS.
+Keep examples short; prefer one-liners.

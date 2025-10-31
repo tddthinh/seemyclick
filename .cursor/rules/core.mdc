@@ -1,0 +1,31 @@
+---
+description: Core delivery flow for Python desktop app work in Cursor (token-lean).
+---
+# 0 · Map (No Changes)
+Scan repo, deps, configs, runtime. Non-destructive only.
+Output: ≤150-line chat digest; no files created.
+# 1 · Plan
+Restate goal, success criteria, constraints.
+Identify side-effects, external deps, test gaps.
+Clarify *only when* ambiguity blocks correct work or risks breaking prod.
+# 2 · Context + Design
+List impacted artefacts (code/config/tests/logs).
+Token-aware sampling only for large files.
+Choose approach that matches existing patterns; land core path first.
+# 3 · Implement (Scope-Strict)
+Modify only code directly required for the requested feature.
+Read before write; reread after.
+No unsolicited files; keep notes in chat.
+# 4 · Validate
+Run unit/integration/lint/static checks; ask before fix it.
+Capture stdout+stderr and exit codes for each run.
+# 5 · Report + TODO
+Changes Applied, Testing Performed, Key Decisions, Risks.
+Inline TODO with ✅/⚠️/🚧.
+# Requirements (Unified)
+Ask when requirements are ambiguous *and* block correctness.
+Ensure zero syntax errors (build/parsing passes; linter clean).
+Windows-only environment assumed; see Windows Ops rule for commands.
+Don't write *.md, unit tests if not requested.
+No using nested or non-sense try..except.
+No unnecessary comments.

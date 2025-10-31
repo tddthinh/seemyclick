@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <title>SeeMyMacro</title>
+    <!-- <link rel="stylesheet" href="assets/jquery-ui-1.14.1/themes/redmond/jquery-ui.css" /> -->
+    <link rel="stylesheet" href="assets/css/all.min.css" />
+    <link rel="stylesheet" href="assets/css/roboto-font.css" />
+    <link rel="stylesheet" href="assets/css/mdb.min.css" />
+    <link rel="stylesheet" href="assets/jquery-ui-1.14.1/jquery-ui.css" />
+    <link rel="stylesheet" href="assets/grid-3.5.1/pqgrid.min.css" />
+    <link rel="stylesheet" href="assets/grid-3.5.1/pqgrid.ui.min.css" />
+    <style>
+        html{
+            height: 100%;
+        }
+        body{
+            height: 100%;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .pq-grid .form-check-input[type=checkbox] {
+            margin-right: 0;
+            outline: none;
+        }
+        .footer{
+            height: 20px;
+            background-color: #f0f0f0;
+            border-top: 1px solid #e0e0e0;
+            padding: 5px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="fluid-container p-3 h-100 d-flex flex-column">
+        <div class="header"></div>
+        <div class="grid-container flex-fill d-flex flex-column">
+            <div class="toolbar">
+                <div class="mt-1 d-flex align-items-start">
+                    <button type="button" class="btn btn-primary me-1" data-mdb-ripple-init>Start</button>
+                    <button type="button" class="btn btn-primary me-1" data-mdb-ripple-init>Load</button>
+                    <button type="button" class="btn btn-primary me-1" data-mdb-ripple-init>Save</button>
+                    <button type="button" class="btn btn-primary me-1" data-mdb-ripple-init>Save To</button>
+                </div>
+                <div class="d-flex mt-3">
+                    <div class="form-check me-3">
+                        <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault1" />
+                        <label class="form-check-label" for="flexCheckDefault1">Loop Actions</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault2" />
+                        <label class="form-check-label" for="flexCheckDefault2">Refresh Log</label>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div id="gridVars"></div>
+            <div class="d-flex mt-3">
+                <h6>Loop count: <span class="badge badge-primary">0</span></h6>
+            </div>
+            <div class="flex-fill" id="gridActions"></div>
+        </div>
+        <div class="footer"></div>
+    </div>
+    <script type="text/javascript" src="assets/js/mdb.umd.min.js"></script>
+    <script src="assets/js/jquery-3.7.1.min.js"></script>
+    <script src="assets/jquery-ui-1.14.1/jquery-ui.min.js"></script>
+    <script src="assets/grid-3.5.1/pqgrid.min.js"></script>
+    <script>
+        // Wait for pywebview API to be ready
+        window.addEventListener('pywebviewready', function () {
+            initGridVars();
+            initGridActions();
+        });
+        var loopCount = 0;
+        var gridActions;
+        var gridVars;
+        var gridData = [];
+
+        function showNotification(message, type = 'success') {
+        }
+
+        async function loadDataFromPython() {
+            try {
+                console.log('Loading data from Python backend...');
+                const data = await pywebview.api.get_data();
+                console.log('Received data:', data);
+
+                gridData = data;
+                gridActions.option("dataModel.data", gridData);
+                gridActions.refreshDataAndView();
+
+                showNotification(`Loaded ${data.length} rows successfully`, 'success');
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showNotification('Error loading data from Python', 'error');
+            }
+        }
+
+        async function initGridActions() {
+            // ParamQuery Grid configuration
+            const actionTypeFields = {
+                wait: {
+                    required: ["function_image"],
+                    optional: [
+                        "name",
+                        "window_title",
+                        "pre_delay",
+                        "post_delay",
+                        "can_fail",
+                        "timeout",
+                        "check_interval",
+                        "confidence",
+                        "disabled",
+                        "save_as",
+                        "condition",
+                        "try_times"
+                    ]
+                },
+                click: {
+                    required: ["function_image"],
+                    optional: [
+                        "name",
+                        "window_title",
+                        "pre_delay",
+                        "post_delay",
+                        "can_fail",
+                        "offset",
+                        "confidence",
+                        "disabled",
+                        "save_as",
+                        "condition",
+                        "try_times"
+                    ]
+                },
+                input: {
+                    required: ["args_text"],
+                    optional: [
+                        "name",
+                        "pre_delay",
+                        "post_delay",
+                        "can_fail",
+                        "disabled",
+                        "save_as",
+                        "condition",
+                        "try_times"
+                    ]
+                },
+                close_windows: {
+                    required: ["window_title"],
+                    optional: [
+                        "name",
+                        "pre_delay",
+                        "post_delay",
+                        "can_fail",
+                        "disabled",
+                        "save_as",
+                        "condition",
+                        "try_times"
+                    ]
+                },
+                remove_folder: {
+                    required: ["args_text"],
+                    optional: [
+                        "name",
+                        "pre_delay",
+                        "post_delay",
+                        "can_fail",
+                        "disabled",
+                        "save_as",
+                        "condition",
+                        "try_times"
+                    ]
+                },
+                start_process: {
+                    required: ["args_text"],
+                    optional: [
+                        "name",
+                        "pre_delay",
+                        "post_delay",
+                        "can_fail",
+                        "disabled",
+                        "save_as",
+                        "condition",
+                        "try_times"
+                    ]
+                },
+                activate_window: {
+                    required: ["window_title"],
+                    optional: [
+                        "name",
+                        "pre_delay",
+                        "post_delay",
+                        "can_fail",
+                        "disabled",
+                        "save_as",
+                        "condition",
+                        "try_times"
+                    ]
+                },
+                save_file: {
+                    required: ["args_text", "content"],
+                    optional: [
+                        "name",
+                        "pre_delay",
+                        "post_delay",
+                        "can_fail",
+                        "mode",
+                        "disabled",
+                        "save_as",
+                        "condition",
+                        "try_times"
+                    ]
+                },
+                resize_window: {
+                    required: ["window_title", "args_text"],
+                    optional: [
+                        "name",
+                        "pre_delay",
+                        "post_delay",
+                        "can_fail",
+                        "disabled",
+                        "save_as",
+                        "condition",
+                        "try_times"
+                    ]
+                },
+                minimize_window: {
+                    required: ["window_title"],
+                    optional: [
+                        "name",
+                        "pre_delay",
+                        "post_delay",
+                        "can_fail",
+                        "disabled",
+                        "save_as",
+                        "condition",
+                        "try_times"
+                    ]
+                },
+                retry_group: {
+                    required: ["args_text", "condition"],
+                    optional: [
+                        "name",
+                        "pre_delay",
+                        "post_delay",
+                        "can_fail",
+                        "disabled",
+                        "save_as",
+                        "try_times"
+                    ]
+                },
+                call_function: {
+                    required: ["function_image", "args_text"],
+                    optional: [
+                        "name",
+                        "pre_delay",
+                        "post_delay",
+                        "can_fail",
+                        "disabled",
+                        "save_as",
+                        "condition",
+                        "try_times"
+                    ]
+                },
+                _keep_variables: {
+                    required: [],
+                    optional: [
+                        "disabled",
+                        "condition",
+                        "can_fail"
+                    ]
+                },
+                _begin_loop: {
+                    required: [],
+                    optional: [
+                        "disabled",
+                        "condition",
+                        "can_fail"
+                    ]
+                },
+                _break_loop: {
+                    required: [],
+                    optional: [
+                        "disabled",
+                        "condition",
+                        "can_fail"
+                    ]
+                }
+            };
+            const columnActionsModel = [
+                {   dataIndx: "state", title: `<input class="form-check-input" type="checkbox"/>`,
+                    maxWidth: 30,
+                    minWidth: 30,
+                    resizable: false,
+                    type: 'checkBoxSelection',
+                    align: "center",
+                    sortable: false,
+                    editor: false,
+                    dataType: 'bool',
+                    cb: { all: false, header: true, check: true, uncheck: false },
+                    render: function (ui) {
+                        return {
+                            text: `<input class="form-check-input" type="checkbox" ${!!ui?.cellData ? 'checked' : ''}/>`
+                        };
+                    }
+                },
+                {   dataIndx: "running", title: "Running",
+                    width: 60,
+                    type: 'checkbox',
+                    align: "center",
+                    cls: 'ui-state-default',
+                    editor: false,
+                    editable: false,
+                    cb: { all: false, header: true, check: true, uncheck: false },
+                    properties: {
+                        default_value: false, prevent_copy_value: true
+                    },
+                    render: function (ui) {
+                        return {
+                            text: `<input class="form-check-input" type="checkbox" ${!!ui?.cellData ? 'checked' : ''}/>`
+                        };
+                    }
+                },
+                {   dataIndx: "count", title: "Count",
+                    align: "center",
+                    width: 60,
+                    properties: { default_value: 0, prevent_copy_value: true }, editable: false,
+                },
+                {   dataIndx: "last_time", title: "Last Time",
+                    align: "center",
+                    width: 130,
+                    properties: { default_value: "", prevent_copy_value: true },
+                    editable: false,
+                },
+                {   dataIndx: "disabled", title: `<input class="form-check-input" type="checkbox"/>&nbsp;Disabled`,
+                    width: 80,
+                    align: "center",
+                    editor: false,
+                    type: 'checkbox',
+                    dataType: 'bool',
+                    cb: { all: false, header: true, check: true, uncheck: false },
+                    editable: true,
+                    properties: { default_value: false },
+                    render: function (ui) {
+                        return {
+                            text: `<input class="form-check-input" type="checkbox" ${!!ui?.cellData ? 'checked' : ''}/>`
+                        };
+                    }
+                },
+                {   dataIndx: "name", title: "Name",
+                    width: 120,
+                    properties: { default_value: "" },
+                    filter: {
+                        type: 'textbox',
+                        condition: 'contain',
+                        listeners: ['keyup']
+                    }
+                },
+                {   dataIndx: "condition", title: "Condition",
+                    width: 150,
+                    properties: { default_value: "" },
+                },
+                {   dataIndx: "type", title: "Type",
+                    width: 120,
+                    align: "center",
+                    editor: {
+                        type: "select",
+                        valueIndx: "id",
+                        labelIndx: "label",
+                        options: [
+                            { id: "wait", label: "Wait" },
+                            { id: "click", label: "Click" },
+                            { id: "input", label: "Input" },
+                            { id: "close_windows", label: "Close Windows" },
+                            { id: "remove_folder", label: "Remove Folder" },
+                            { id: "start_process", label: "Start Process" },
+                            { id: "activate_window", label: "Activate Window" },
+                            { id: "save_file", label: "Save File" },
+                            { id: "resize_window", label: "Resize Window" },
+                            { id: "minimize_window", label: "Minimize Window" },
+                            { id: "retry_group", label: "Retry Group" },
+                            { id: "call_function", label: "Call Function" },
+                            { id: "_keep_variables", label: "Keep Variables" },
+                            { id: "_begin_loop", label: "Begin Loop" },
+                            { id: "_break_loop", label: "Break Loop" },
+                        ]
+                    },
+                    properties: {
+                        default_value: "click"
+                    },
+                },
+                {   dataIndx: "function_image", title: "Function/Image",
+                    width: 150,
+                    properties: { default_value: "" },
+                },
+                {   dataIndx: "args_text", title: "Arguments",
+                    width: 200,
+                    properties: { default_value: "" },
+                },
+                {   dataIndx: "save_as", title: "Save As",
+                    width: 120,
+                    align: "center",
+                    properties: { default_value: "" },
+                },
+                {   dataIndx: "window_title", title: "Window Title",
+                    width: 150,
+                    align: "center",
+                    properties: { default_value: "" },
+                },
+                {   dataIndx: "pre_delay", title: "Pre Delay",
+                    width: 80,
+                    align: "center",
+                    properties: { default_value: 0 },
+                },
+                {   dataIndx: "post_delay", title: "Post Delay",
+                    width: 80,
+                    align: "center",
+                    properties: { default_value: 0 },
+                },
+                {   dataIndx: "can_fail", title: `<input class="form-check-input" type="checkbox"/>&nbsp;Can Fail`,
+                    width: 80,
+                    align: "center",
+                    editor: false,
+                    type: 'checkbox',
+                    dataType: 'bool',
+                    cb: { all: false, header: true, check: true, uncheck: false },
+                    editable: true,
+                    properties: { default_value: false },
+                    render: function (ui) {
+                        return {
+                            text: `<input class="form-check-input" type="checkbox" ${!!ui?.cellData ? 'checked' : ''}/>`
+                        };
+                    }
+                },
+                {   dataIndx: "try_times", title: "Try Times",
+                    width: 80,
+                    align: "center",
+                    properties: { default_value: 1 },
+                },
+                {   dataIndx: "timeout", title: "Timeout",
+                    width: 80,
+                    align: "center",
+                    properties: { default_value: 0 },
+                },
+                {   dataIndx: "check_interval", title: "Check Interval",
+                    width: 100,
+                    align: "center",
+                    properties: { default_value: 0 },
+                },
+                {   dataIndx: "confidence", title: "Confidence",
+                    width: 100,
+                    align: "center",
+                    properties: { default_value: 0.8 },
+                },
+                {   dataIndx: "offset", title: "Offset",
+                    width: 80,
+                    align: "center",
+                    properties: { default_value: "0,0" },
+                },
+                {   dataIndx: "mode", title: "Mode",
+                    width: 100,
+                    align: "center",
+                    editor: {
+                        type: "select",
+                        valueIndx: "id",
+                        labelIndx: "label",
+                        options: [
+                            { id: "", label: "" },
+                            { id: "a", label: "Append" },
+                            { id: "w", label: "Overwrite" },
+                        ]
+                    },
+                    properties: {
+                        default_value: "",
+                    },
+                },
+                {   dataIndx: "content", title: "Content",
+                    width: 200,
+                    editor: {
+                        type: 'textarea',
+                    },
+                    properties: { default_value: "" },
+                },
+            ]
+            const gridActionsOptions = {
+                width: '100%',
+                height: 350,
+                colModel: columnActionsModel,
+                dataModel: { data: [] },
+                editable: true,
+                selectionModel: { type: 'cell', mode: 'block' },
+                sortable: true,
+                columnTemplate: {
+                    type: "text",
+                    halign: "center",
+                    hvalign: "center",
+                    align: "center",
+                    valign: "center",
+                    resizable: true,
+                },
+                postRenderInterval: 0,
+                filterModel: { on: true, mode: "AND", header: true },
+                numberCell: { show: false },
+                title: "Actions",
+                scrollModel: { autoFit: false },
+                resizable: true,
+                track: true,
+                stripeRows: true,
+                swipeModel: { on: false },
+                wrap: false,
+                hwrap: false,
+                editModel: {
+                    clicksToEdit: 2
+                },
+                toolbar: {
+                    items: [
+                        {
+                            type: 'button',
+                            label: 'Add',
+                            listener: function () {
+                                console.log('Add button clicked');
+                            }
+                        },
+                        {
+                            type: 'button',
+                            label: 'Delete',
+                            listener: function () {
+                                console.log('Delete button clicked');
+                            }
+                        },
+                        {
+                            type: 'button',
+                            label: 'Copy',
+                            listener: function () {
+                                console.log('Copy button clicked');
+                            }
+                        },
+                        {
+                            type: 'button',
+                            label: 'Screenshot',
+                            listener: function () {
+                                console.log('Screenshot button clicked');
+                            }
+                        }
+                    ]
+                },
+            };
+            gridActions = pq.grid("#gridActions", gridActionsOptions);
+
+            await loadDataFromPython();
+        }
+        async function initGridVars() {
+            const columnVarsModel = VARS_COLUMN_MODEL = [
+                {
+                    title: `<input class="form-check-input" type="checkbox"/>`,
+                    dataIndx: "state",
+                    maxWidth: 30,
+                    minWidth: 30,
+                    resizable: false,
+                    type: 'checkBoxSelection',
+                    align: "center",
+                    sortable: false,
+                    editor: false,
+                    dataType: 'bool',
+                    cb: { all: false, header: true, check: true, uncheck: false },
+                    render: function (ui) {
+                        return {
+                            text: `<input class="form-check-input" type="checkbox" ${!!ui?.cellData ? 'checked' : ''}/>`
+                        };
+                    }
+                },
+                {
+                    dataIndx: "name",
+                    title: "Variable Name",
+                    width: 120,
+                    properties: { default_value: "" },
+                    filter: {
+                        type: 'textbox',
+                        condition: 'contain',
+                        listeners: ['keyup']
+                    }
+                },
+                {
+                    dataIndx: "value",
+                    title: "Current Value",
+                    width: 150,
+                    properties: { default_value: "" },
+                    filter: {
+                        type: 'textbox',
+                        condition: 'contain',
+                        listeners: ['keyup']
+                    }
+                },
+                {
+                    dataIndx: "step",
+                    title: "Changed By Step",
+                    width: 120,
+                    properties: { default_value: "" },
+                    filter: {
+                        type: 'textbox',
+                        condition: 'contain',
+                        listeners: ['keyup']
+                    }
+                },
+                {
+                    dataIndx: "default_value",
+                    title: "Default Value",
+                    width: 120,
+                    properties: { default_value: "" },
+                    filter: {
+                        type: 'textbox',
+                        condition: 'contain',
+                        listeners: ['keyup']
+                    }
+                },
+            ]
+            const gridVarsOptions = {
+                width: '100%',
+                height: 200,
+                colModel: columnVarsModel,
+                dataModel: { data: [{state: false, name: '',value: '', step: '', default_value: ''}] },
+                editable: true,
+                selectionModel: { type: 'cell', mode: 'block' },
+                sortable: true,
+                columnTemplate: {
+                    type: "text",
+                    halign: "center",
+                    hvalign: "center",
+                    align: "center",
+                    valign: "center",
+                    resizable: true,
+                },
+                postRenderInterval: 0,
+                filterModel: { on: true, mode: "AND", header: true },
+                numberCell: { show: false },
+                title: "Variables",
+                scrollModel: { autoFit: false },
+                resizable: true,
+                track: true,
+                stripeRows: true,
+                swipeModel: { on: false },
+                wrap: false,
+                hwrap: false,
+                editModel: {
+                    clicksToEdit: 2
+                },
+                toolbar: {
+                    items: [
+                        {
+                            type: 'button',
+                            label: 'Add',
+                            listener: function () {
+                                console.log('Add button clicked');
+                            }
+                        },
+                        {
+                            type: 'button',
+                            label: 'Delete',
+                            listener: function () {
+                                console.log('Delete button clicked');
+                            }
+                        },
+                        {
+                            type: 'button',
+                            label: 'Copy',
+                            listener: function () {
+                                console.log('Copy button clicked');
+                            }
+                        },
+                    ]
+                },
+            };
+            gridVars = pq.grid("#gridVars", gridVarsOptions);
+        }
+
+        // Button event handlers
+        $(document).ready(function () {
+            // Add row button
+            $('#btnAdd').on('click', async function () {
+                try {
+                    const newRow = {
+                        id: null, // Will be assigned by Python backend
+                        company: 'New Company',
+                        revenues: 0,
+                        profits: 0
+                    };
+
+                    const result = await pywebview.api.add_row(newRow);
+
+                    if (result.success) {
+                        await loadDataFromPython();
+                        showNotification('Row added successfully', 'success');
+                    } else {
+                        showNotification('Error: ' + result.message, 'error');
+                    }
+                } catch (error) {
+                    console.error('Error adding row:', error);
+                    showNotification('Error adding row', 'error');
+                }
+            });
+
+            // Delete row button
+            $('#btnDelete').on('click', async function () {
+                try {
+                    const selection = $gridActions.pqGrid("selection", { type: 'row', method: 'getSelection' });
+
+                    if (!selection || selection.length === 0) {
+                        showNotification('Please select a row to delete', 'error');
+                        return;
+                    }
+
+                    const rowIndx = selection[0].rowIndx;
+                    const rowData = $gridActions.pqGrid("getRowData", { rowIndx: rowIndx });
+
+                    if (confirm(`Delete row: ${rowData.company}?`)) {
+                        const result = await pywebview.api.delete_row_by_id(rowData.id);
+
+                        if (result.success) {
+                            await loadDataFromPython();
+                            showNotification('Row deleted successfully', 'success');
+                        } else {
+                            showNotification('Error: ' + result.message, 'error');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error deleting row:', error);
+                    showNotification('Error deleting row', 'error');
+                }
+            });
+
+            // Refresh button
+            $('#btnRefresh').on('click', async function () {
+                await loadDataFromPython();
+            });
+        });
+    </script>
+</body>
+
+</html>
