@@ -45,3 +45,20 @@ venv.bak/
 *.tmp
 *.bak
 
+webview_data/EBWebView/Default/Local Storage/leveldb/LOG
+webview_data/EBWebView/Default/Local Storage/leveldb/LOG.old
+webview_data/EBWebView/Default/Extension Scripts/LOG
+webview_data/EBWebView/Default/Extension Scripts/LOG.old
+webview_data/EBWebView/Default/Extension Rules/LOG
+webview_data/EBWebView/Default/Extension Rules/LOG.old
+webview_data/EBWebView/Default/Session Storage/LOG
+webview_data/EBWebView/Default/Session Storage/LOG.old
+webview_data/EBWebView/Default/Extension State/LOG
+webview_data/EBWebView/Default/Extension State/LOG.old
+webview_data/EBWebView/Default/shared_proto_db/LOG
+webview_data/EBWebView/Default/shared_proto_db/LOG.old
+webview_data/EBWebView/GraphiteDawnCache/*
+webview_data/EBWebView/*Cache/*
+webview_data/EBWebView/Local State
+webview_data/EBWebView/Variations
+webview_data/EBWebView/Default/History-journal
