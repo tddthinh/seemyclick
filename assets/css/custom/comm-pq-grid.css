@@ -21,6 +21,27 @@ input.pq-editor-focus.pq-cell-editor {
     border-radius: 0 !important;
     outline: none;
 }
-.pq-cell-disabled, .pq-cell-disabled > input[type=checkbox] {
+ .pq-cell-disabled, .pq-cell-disabled > input[type=checkbox] {
     cursor: not-allowed;
+}
+.pq-grid .form-check-input[type=checkbox] {
+    margin-right: 0;
+    outline: none;
+}
+.pq-select-search-div span.ui-icon.ui-icon-search {
+    margin-top: 3px;
+}
+.pq-select-button .pq-item-close.ui-icon.ui-icon-close {
+    margin-top: 0px;
+}
+.pq-select-item {
+    padding: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+.pq-select-text {
+    color: transparent;
+}
+.pq-grid-header-search-row .pq-grid-hd-search-field{
+    min-width: unset;
 }

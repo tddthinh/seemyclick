@@ -1,10 +1,11 @@
 import webview
 import json
 import os
-
+import sys
+from pathlib import Path
 
 # Set WebView2 user data folder to avoid permission issues
-webview_data_dir = os.path.join(os.getcwd(), 'webview_data')
+webview_data_dir = os.path.join(os.getenv('TEMP'), 'webview_data')
 os.makedirs(webview_data_dir, exist_ok=True)
 os.environ['WEBVIEW2_USER_DATA_FOLDER'] = webview_data_dir
 
@@ -13,7 +14,7 @@ class API:
     def __init__(self):
         self.data = [
             {"type": "click","step_number": 1,"disabled": True,"image": "images\\screenshot_20250913_230333.png","pre_delay": 0.0,"post_delay": 0.0,"can_fail": True,"try_times": 1,"confidence": 0.8,"offset": "0,0"},
-            {"type": "click","step_number": 2,"disabled": False,"image": "images\\screenshot_20250913_230333.png","pre_delay": 0.0,"post_delay": 0.0,"can_fail": True,"try_times": 1,"confidence": 0.8,"offset": "0,0"},
+            {"type": "remove_folder","step_number": 2,"disabled": False,"image": "images\\screenshot_20250913_230333.png","pre_delay": 0.0,"post_delay": 0.0,"can_fail": True,"try_times": 1,"confidence": 0.8,"offset": "0,0"},
             {"type": "click","step_number": 3,"disabled": False,"image": "images\\screenshot_20250913_230333.png","pre_delay": 0.0,"post_delay": 0.0,"can_fail": True,"try_times": 1,"confidence": 0.8,"offset": "0,0"},
             {"type": "click","step_number": 4,"disabled": False,"image": "images\\screenshot_20250913_230333.png","pre_delay": 0.0,"post_delay": 0.0,"can_fail": True,"try_times": 1,"confidence": 0.8,"offset": "0,0"},
             {"type": "click","step_number": 5,"disabled": False,"image": "images\\screenshot_20250913_230333.png","pre_delay": 0.0,"post_delay": 0.0,"can_fail": True,"try_times": 1,"confidence": 0.8,"offset": "0,0"},
@@ -95,29 +96,45 @@ class API:
             print(f"Python: Error deleting row: {e}")
             return {'success': False, 'message': str(e)}
 
+SHELL = """
+<!doctype html><html><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  html,body{height:100%;margin:0;background:#fff;font:14px system-ui}
+  .center{height:100%;display:grid;place-items:center}
+  .spinner{width:32px;height:32px;border:3px solid #ddd;border-top-color:#555;border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head><body><div class="center"><div class="spinner"></div></div></body></html>
+"""
+APP_ROOT = Path(__file__).parent
+ENTRY = APP_ROOT / 'index.html'
+
+def boot(window):
+    window.load_url(str(ENTRY))
 
 def main():
-    """Main function to initialize and start the pywebview application."""
-    api = API()
-    
-    # Create the webview window
-    window = webview.create_window(
-        title='Seemymacro',
-        url='index.html',
-        js_api=api,
-        width=1200,
-        height=800,
-        resizable=True,
-        background_color='#FFFFFF'
-    )
-    
-    print("Starting PyWebView application...")
-    print("Python backend is ready to communicate with JavaScript frontend")
-    
-    # Start the webview
-    webview.start(debug=True)
+    debug = False
+    width = 800
+    height = 800
+    if "--debug" in sys.argv:
+        debug = True
+    if "--width" in sys.argv:
+        width = int(sys.argv[sys.argv.index("--width") + 1])
+    if "--height" in sys.argv:
+        height = int(sys.argv[sys.argv.index("--height") + 1])
 
+    api = API()
+    w = webview.create_window(
+        title='Seemyclick',
+        js_api=api,
+        width=width, height=height,
+        resizable=True,
+        background_color='#FFFFFF',
+        html=SHELL
+    )
+    webview.start(func=boot, args=(w,), gui='edgechromium',
+                  http_server=True, private_mode=False, debug=debug)
 
 if __name__ == '__main__':
     main()
-

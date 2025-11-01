@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="assets/css/roboto-font.css" />
     <link rel="stylesheet" href="assets/css/mdb.min.css" />
     <link rel="stylesheet" href="assets/jquery-ui-1.14.1/jquery-ui.css" />
+    <link rel="stylesheet" href="assets/select-1.3.2/pqselect.min.css" />
     <link rel="stylesheet" href="assets/grid-3.5.1/pqgrid.min.css" />
     <link rel="stylesheet" href="assets/grid-3.5.1/pqgrid.ui.min.css" />
     <!-- Custom CSS -->
@@ -27,11 +28,6 @@
             padding: 0;
             box-sizing: border-box;
             font-size: 14px;
-        }
-
-        .pq-grid .form-check-input[type=checkbox] {
-            margin-right: 0;
-            outline: none;
         }
         .footer{
             height: 20px;
@@ -81,6 +77,7 @@
     <script type="text/javascript" src="assets/js/mdb.umd.min.js"></script>
     <script src="assets/js/jquery-3.7.1.min.js"></script>
     <script src="assets/jquery-ui-1.14.1/jquery-ui.min.js"></script>
+    <script src="assets/select-1.3.2/pqselect.min.js"></script>
     <script src="assets/grid-3.5.1/pqgrid.min.js"></script>
     <!-- Custom JS -->
     <script src="assets/js/custom/constant.js"></script>
@@ -88,7 +85,7 @@
         // Wait for pywebview API to be ready
         window.addEventListener('pywebviewready', function () {
             initGridVars();
-            initGridActions();
+            setTimeout(() => initGridActions(), 50);
         });
         var loopCount = 0;
         var gridActions;
@@ -106,8 +103,8 @@
 
                 gridData = data;
                 gridActions.option("dataModel.data", gridData);
+                gridActions.refreshFilter();
                 gridActions.refreshDataAndView();
-
                 showNotification(`Loaded ${data.length} rows successfully`, 'success');
             } catch (error) {
                 console.error('Error loading data:', error);
@@ -115,6 +112,62 @@
             }
         }
 
+        function filterWidget(options){
+            let filter = {
+                type: 'select',
+                on: true,
+                attr: "multiple",
+                style: "height:18px;",
+                condition: "range",
+                valueIndx: "value",
+                labelIndx: "label",
+                listeners: ['change'],
+                init: function() {
+                    $(this).pqSelect({
+                        checkbox: true,
+                        radio: true,
+                        width: '100%'
+                    });
+                    pqselect = $(this).data('paramquery-pqSelect')
+                    $search_div1 = pqselect.$popupCont.find(".pq-select-search-div1").detach();
+                    pqselect.$popupCont.find(".ui-icon.ui-icon-search").after($search_div1);
+                },
+                ...options
+            }
+            return filter;
+        }
+        function selectFilter(dataIndx) {
+            let column = gridActions.getColumn({
+                dataIndx: dataIndx
+            });
+            let valueToLabel = _.mapValues(_.keyBy(column.editor.options,"value"),"label")
+            let uniqData = _.uniq(_.flatMap(gridActions.getData({dataIndx: [dataIndx]}),dataIndx));
+            let options = _.flatMap(uniqData,e=>{return {value: e, label: valueToLabel[e]}})
+            let filter = column.filter;
+            filter.cache = null;
+            filter.options = options;
+        }
+        function checkboxFilter(dataIndx) {
+            let column = gridActions.getColumn({
+                dataIndx: dataIndx
+            });
+            let filter = column.filter;
+            filter.cache = null;
+            filter.options = [
+                { value: true, label: "Y" },
+                { value: false, label: "N" }
+            ];
+        }
+        function textFilter(dataIndx) {
+            let column = gridActions.getColumn({
+                dataIndx: dataIndx
+            });
+            let uniqData = _.uniq(_.flatMap(gridActions.getData({dataIndx: [dataIndx]}),dataIndx));
+            let options = _.flatMap(uniqData,e=>{return {value: e, label: e}})
+            let filter = column.filter;
+            filter.cache = null;
+            filter.options = options;
+        }
         // Action type field definitions (required/optional fields for each action type)
         const actionTypeFields = {
                 wait: {
@@ -399,17 +452,17 @@
         async function initGridActions() {
             const columnActionsModel = [
                 {   dataIndx: "state", title: `<input class="form-check-input" type="checkbox"/>`,
-                    maxWidth: 30,
-                    minWidth: 30,
+                    maxWidth: 50,
+                    minWidth: 50,
                     resizable: false,
                     editable: isEditable,
-                    type: 'checkBoxSelection',
+                    type: 'checkbox',
                     align: "center",
                     sortable: false,
                     editor: false,
                     dataType: 'bool',
                     cb: { all: false, header: true, check: true, uncheck: false },
-                    filter: { type: 'checkbox', listeners: ['change'] },
+                    filter: filterWidget(),
                     render: function (ui) {
                         return {
                             text: `<input class="form-check-input" type="checkbox" ${!!ui?.cellData ? 'checked' : ''}/>`
@@ -417,14 +470,14 @@
                     }
                 },
                 {   dataIndx: "running", title: "Running",
-                    width: 60,
+                    width: 80,
                     type: 'checkbox',
                     align: "center",
                     editable: isEditable,
                     editor: false,
                     editable: isEditable,
                     cb: { all: false, header: true, check: true, uncheck: false },
-                    filter: { type: 'checkbox', listeners: ['change'] },
+                    filter: filterWidget(),
                     properties: {
                         default_value: false, prevent_copy_value: true
                     },
@@ -442,7 +495,7 @@
                     cls: CELL_CLASS.DISABLED,
                     properties: { default_value: 0, prevent_copy_value: true },
                     editable: isEditable,
-                    filter: { type: 'textbox', condition: 'range', listeners: ['change'] },
+                    filter: filterWidget(),
                 },
                 {   dataIndx: "last_time", title: "Last Time",
                     align: "center",
@@ -451,7 +504,7 @@
                     properties: { default_value: "", prevent_copy_value: true },
                     cls: CELL_CLASS.DISABLED,
                     editable: isEditable,
-                    filter: { type: 'textbox', condition: 'contain', listeners: ['keyup'] },
+                    filter: filterWidget(),
                 },
                 {   dataIndx: "disabled", title: `<input class="form-check-input" type="checkbox"/>&nbsp;Disabled`,
                     width: 80,
@@ -462,7 +515,7 @@
                     dataType: 'bool',
                     cb: { all: false, header: true, check: true, uncheck: false },
                     properties: { default_value: false },
-                    filter: { type: 'checkbox', listeners: ['change'] },
+                    filter: filterWidget(),
                     render: function (ui) {
                         return {
                             text: `<input class="form-check-input" type="checkbox" ${!!ui?.cellData ? 'checked' : ''}/>`
@@ -473,56 +526,25 @@
                     width: 120,
                     editable: isEditable,
                     properties: { default_value: "" },
-                    filter: {
-                        type: 'textbox',
-                        condition: 'contain',
-                        listeners: ['keyup']
-                    },
+                    filter: filterWidget(),
                     render: renderCell
                 },
                 {   dataIndx: "condition", title: "Condition",
                     width: 150,
                     editable: isEditable,
                     properties: { default_value: "" },
-                    filter: { type: 'textbox', condition: 'contain', listeners: ['keyup'] },
+                    filter: filterWidget(),
                     render: renderCell
                 },
                 {   dataIndx: "type", title: "Type",
-                    width: 120,
+                    width: 150,
                     align: "center",
                     editable: isEditable,
                     editor: {
                         type: "select",
-                        valueIndx: "id",
+                        valueIndx: "value",
                         labelIndx: "label",
                         options: [
-                            { id: "wait", label: "Wait" },
-                            { id: "click", label: "Click" },
-                            { id: "input", label: "Input" },
-                            { id: "close_windows", label: "Close Windows" },
-                            { id: "remove_folder", label: "Remove Folder" },
-                            { id: "start_process", label: "Start Process" },
-                            { id: "activate_window", label: "Activate Window" },
-                            { id: "save_file", label: "Save File" },
-                            { id: "resize_window", label: "Resize Window" },
-                            { id: "minimize_window", label: "Minimize Window" },
-                            { id: "retry_group", label: "Retry Group" },
-                            { id: "call_function", label: "Call Function" },
-                            { id: "_keep_variables", label: "Keep Variables" },
-                            { id: "_begin_loop", label: "Begin Loop" },
-                            { id: "_break_loop", label: "Break Loop" },
-                        ],
-                        listeners: ['change'] 
-                    },
-                    properties: {
-                        default_value: "click"
-                    },
-                    filter: {
-                        type: 'select',
-                        valueIndx: 'value',
-                        labelIndx: 'label',
-                        options: [
-                            { value: "", label: "All" },
                             { value: "wait", label: "Wait" },
                             { value: "click", label: "Click" },
                             { value: "input", label: "Input" },
@@ -541,20 +563,24 @@
                         ],
                         listeners: ['change'] 
                     },
+                    properties: {
+                        default_value: "click"
+                    },
+                    filter: filterWidget(),
                     render: renderCell
                 },
                 {   dataIndx: "function_image", title: "Function/Image",
                     width: 150,
                     editable: isEditable,
                     properties: { default_value: "" },
-                    filter: { type: 'textbox', condition: 'contain', listeners: ['keyup'] },
+                    filter: filterWidget(),
                     render: renderCell
                 },
                 {   dataIndx: "args_text", title: "Arguments",
                     width: 200,
                     editable: isEditable,
                     properties: { default_value: "" },
-                    filter: { type: 'textbox', condition: 'contain', listeners: ['keyup'] },
+                    filter: filterWidget(),
                     render: renderCell
                 },
                 {   dataIndx: "save_as", title: "Save As",
@@ -562,7 +588,7 @@
                     align: "center",
                     editable: isEditable,
                     properties: { default_value: "" },
-                    filter: { type: 'textbox', condition: 'contain', listeners: ['keyup'] },
+                    filter: filterWidget(),
                     render: renderCell
                 },
                 {   dataIndx: "window_title", title: "Window Title",
@@ -570,7 +596,7 @@
                     align: "center",
                     editable: isEditable,
                     properties: { default_value: "" },
-                    filter: { type: 'textbox', condition: 'contain', listeners: ['keyup'] },
+                    filter: filterWidget(),
                     render: renderCell
                 },
                 {   dataIndx: "pre_delay", title: "Pre Delay",
@@ -578,7 +604,7 @@
                     align: "center",
                     editable: isEditable,
                     properties: { default_value: 0 },
-                    filter: { type: 'textbox', condition: 'range', listeners: ['change'] },
+                    filter: filterWidget(),
                     render: renderCell
                 },
                 {   dataIndx: "post_delay", title: "Post Delay",
@@ -586,7 +612,7 @@
                     align: "center",
                     editable: isEditable,
                     properties: { default_value: 0 },
-                    filter: { type: 'textbox', condition: 'range', listeners: ['change'] },
+                    filter: filterWidget(),
                     render: renderCell
                 },
                 {   dataIndx: "can_fail", title: `<input class="form-check-input" type="checkbox"/>&nbsp;Can Fail`,
@@ -598,7 +624,7 @@
                     dataType: 'bool',
                     cb: { all: false, header: true, check: true, uncheck: false },
                     properties: { default_value: false },
-                    filter: { type: 'checkbox', listeners: ['change'] },
+                    filter: filterWidget(),
                     render: function (ui) {
                         return {
                             text: `<input class="form-check-input" type="checkbox" ${!!ui?.cellData ? 'checked' : ''}/>`
@@ -610,7 +636,7 @@
                     align: "center",
                     editable: isEditable,
                     properties: { default_value: 1 },
-                    filter: { type: 'textbox', condition: 'range', listeners: ['change'] },
+                    filter: filterWidget(),
                     render: renderCell
                 },
                 {   dataIndx: "timeout", title: "Timeout",
@@ -618,7 +644,7 @@
                     align: "center",
                     editable: isEditable,
                     properties: { default_value: 0 },
-                    filter: { type: 'textbox', condition: 'range', listeners: ['change'] },
+                    filter: filterWidget(),
                     render: renderCell
                 },
                 {   dataIndx: "check_interval", title: "Check Interval",
@@ -626,7 +652,7 @@
                     align: "center",
                     editable: isEditable,
                     properties: { default_value: 0 },
-                    filter: { type: 'textbox', condition: 'range', listeners: ['change'] },
+                    filter: filterWidget(),
                     render: renderCell
                 },
                 {   dataIndx: "confidence", title: "Confidence",
@@ -634,7 +660,7 @@
                     align: "center",
                     editable: isEditable,
                     properties: { default_value: 0.8 },
-                    filter: { type: 'textbox', condition: 'contain', listeners: ['keyup'] },
+                    filter: filterWidget(),
                     render: renderCell
                 },
                 {   dataIndx: "offset", title: "Offset",
@@ -642,7 +668,7 @@
                     align: "center",
                     editable: isEditable,
                     properties: { default_value: "0,0" },
-                    filter: { type: 'textbox', condition: 'contain', listeners: ['keyup'] },
+                    filter: filterWidget(),
                     render: renderCell
                 },
                 {   dataIndx: "mode", title: "Mode",
@@ -662,17 +688,7 @@
                     properties: {
                         default_value: "",
                     },
-                    filter: {
-                        type: 'select',
-                        valueIndx: 'value',
-                        labelIndx: 'label',
-                        options: [
-                            { value: "", label: "All" },
-                            { value: "a", label: "Append" },
-                            { value: "w", label: "Overwrite" },
-                        ],
-                        listeners: ['change']
-                    },
+                    filter: filterWidget(),
                     render: renderCell
                 },
                 {   dataIndx: "content", title: "Content",
@@ -681,7 +697,7 @@
                         type: 'textarea',
                     },
                     properties: { default_value: "" },
-                    filter: { type: 'textbox', condition: 'contain', listeners: ['keyup'] },
+                    filter: filterWidget(),
                     render: renderCell
                 },
             ]
@@ -700,14 +716,20 @@
                     valign: "center",
                     resizable: true,
                 },
+                freezeCols: 1,
                 postRenderInterval: 0,
                 filterModel: { on: true, mode: "AND", header: true },
                 numberCell: { show: false },
                 title: "Actions",
-                scrollModel: { autoFit: false },
+                scrollModel: { 
+                    autoFit: false,
+                },
+                virtualX: true, // Enable virtual scrolling for columns
+                virtualY: true, // Enable virtual scrolling for rows
+                virtualXHeader: true,
                 resizable: true,
-                track: true,
-                stripeRows: true,
+                track: false, // Disable change tracking for better performance
+                stripeRows: false, // Reduces rendering overhead
                 swipeModel: { on: false },
                 wrap: false,
                 hwrap: false,
@@ -756,6 +778,29 @@
                 }
             });
 
+            gridActions.refreshFilter = function() {
+                selectFilter("type");
+                selectFilter("mode");
+                textFilter("count");
+                textFilter("last_time");
+                textFilter("name");
+                textFilter("condition");
+                textFilter("function_image");
+                textFilter("args_text");
+                textFilter("save_as");
+                textFilter("window_title");
+                textFilter("confidence");
+                textFilter("offset");
+                textFilter("timeout");
+                textFilter("check_interval");
+                textFilter("try_times");
+                textFilter("pre_delay");
+                textFilter("post_delay");
+                checkboxFilter("disabled");
+                checkboxFilter("can_fail");
+                checkboxFilter("running");
+                checkboxFilter("state");
+            }
             await loadDataFromPython();
         }
         async function initGridVars() {
@@ -843,10 +888,15 @@
                 filterModel: { on: true, mode: "AND", header: true },
                 numberCell: { show: false },
                 title: "Variables",
-                scrollModel: { autoFit: false },
+                scrollModel: { 
+                    autoFit: false,
+                    pace: 'optimum'
+                },
+                virtualX: true,
+                virtualY: true,
                 resizable: true,
-                track: true,
-                stripeRows: true,
+                track: false, // Disable change tracking for better performance
+                stripeRows: false, // Reduces rendering overhead
                 swipeModel: { on: false },
                 wrap: false,
                 hwrap: false,
