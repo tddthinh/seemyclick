@@ -1,0 +1,26 @@
+.pq-cell-disabled{
+	background: rgb(246, 246, 246);
+}
+.pq-cell-required{
+	background: #ffff99;
+}
+.pq-grid-cell{
+    color: black;
+}
+.pq-grid-cell.pq-state-select{
+    color: black;
+}
+.pq-grid-cell.pq-state-select.ui-state-highlight {
+    background: aliceblue;
+}
+input.pq-editor-focus.pq-cell-editor {
+    border: none !important;
+    height: 25px !important;
+    width: 98% !important;
+    margin-top: -1px !important;
+    border-radius: 0 !important;
+    outline: none;
+}
+.pq-cell-disabled, .pq-cell-disabled > input[type=checkbox] {
+    cursor: not-allowed;
+}
