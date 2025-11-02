@@ -107,6 +107,7 @@
     <script src="assets/grid-3.5.1/pqgrid.min.js"></script>
     <!-- Custom JS -->
     <script src="assets/js/custom/constant.js"></script>
+    <script src="assets/js/custom/common-pqgrid.js"></script>
     <script>
         window.addEventListener('pywebviewready', function () {
             setTimeout(() => initGridVars(), 50);
@@ -117,346 +118,292 @@
         var gridVars;
         var gridData = [];
 
-        function filterWidget(options) {
-            let filter = {
-                type: 'select',
-                on: true,
-                attr: "multiple",
-                style: "height:18px;",
-                condition: "range",
-                valueIndx: "value",
-                labelIndx: "label",
-                listeners: ['change'],
-                init: function () {
-                    $(this).pqSelect({
-                        checkbox: true,
-                        radio: true,
-                        width: '100%'
-                    });
-                    pqselect = $(this).data('paramquery-pqSelect')
-                    $search_div1 = pqselect.$popupCont.find(".pq-select-search-div1").detach();
-                    pqselect.$popupCont.find(".ui-icon.ui-icon-search").after($search_div1);
-                },
-                ...options
-            }
-            return filter;
-        }
-        function selectFilter(dataIndx) {
-            let column = gridActions.getColumn({
-                dataIndx: dataIndx
-            });
-            let valueToLabel = _.mapValues(_.keyBy(column.editor.options, "value"), "label")
-            let uniqData = _.uniq(_.flatMap(gridActions.getData({ dataIndx: [dataIndx] }), dataIndx));
-            let options = _.flatMap(uniqData, e => { return { value: e, label: valueToLabel[e] } })
-            let filter = column.filter;
-            filter.cache = null;
-            filter.options = options;
-        }
-        function checkboxFilter(dataIndx) {
-            let column = gridActions.getColumn({
-                dataIndx: dataIndx
-            });
-            let filter = column.filter;
-            filter.cache = null;
-            filter.options = [
-                { value: true, label: "Y" },
-                { value: false, label: "N" }
-            ];
-        }
-        function textFilter(dataIndx) {
-            let column = gridActions.getColumn({
-                dataIndx: dataIndx
-            });
-            let uniqData = _.uniq(_.flatMap(gridActions.getData({ dataIndx: [dataIndx] }), dataIndx));
-            let options = _.flatMap(uniqData, e => { return { value: e, label: e } })
-            let filter = column.filter;
-            filter.cache = null;
-            filter.options = options;
-        }
-        const actionTypeFields = {
-            wait: {
-                required: { "function_image": 1 },
-                optional: {
-                    "name": 1,
-                    "window_title": 1,
-                    "pre_delay": 1,
-                    "post_delay": 1,
-                    "can_fail": 1,
-                    "timeout": 1,
-                    "check_interval": 1,
-                    "confidence": 1,
-                    "disabled": 1,
-                    "save_as": 1,
-                    "condition": 1,
-                    "try_times": 1
-                }
-            },
-            click: {
-                required: { "function_image": 1 },
-                optional: {
-                    "name": 1,
-                    "window_title": 1,
-                    "pre_delay": 1,
-                    "post_delay": 1,
-                    "can_fail": 1,
-                    "offset": 1,
-                    "confidence": 1,
-                    "disabled": 1,
-                    "save_as": 1,
-                    "condition": 1,
-                    "try_times": 1
-                }
-            },
-            input: {
-                required: { "args_text": 1 },
-                optional: {
-                    "name": 1,
-                    "pre_delay": 1,
-                    "post_delay": 1,
-                    "can_fail": 1,
-                    "disabled": 1,
-                    "save_as": 1,
-                    "condition": 1,
-                    "try_times": 1
-                }
-            },
-            close_windows: {
-                required: { "window_title": 1 },
-                optional: {
-                    "name": 1,
-                    "pre_delay": 1,
-                    "post_delay": 1,
-                    "can_fail": 1,
-                    "disabled": 1,
-                    "save_as": 1,
-                    "condition": 1,
-                    "try_times": 1
-                }
-            },
-            remove_folder: {
-                required: { "args_text": 1 },
-                optional: {
-                    "name": 1,
-                    "pre_delay": 1,
-                    "post_delay": 1,
-                    "can_fail": 1,
-                    "disabled": 1,
-                    "save_as": 1,
-                    "condition": 1,
-                    "try_times": 1
-                }
-            },
-            start_process: {
-                required: { "args_text": 1 },
-                optional: {
-                    "name": 1,
-                    "pre_delay": 1,
-                    "post_delay": 1,
-                    "can_fail": 1,
-                    "disabled": 1,
-                    "save_as": 1,
-                    "condition": 1,
-                    "try_times": 1
-                }
-            },
-            activate_window: {
-                required: { "window_title": 1 },
-                optional: {
-                    "name": 1,
-                    "pre_delay": 1,
-                    "post_delay": 1,
-                    "can_fail": 1,
-                    "disabled": 1,
-                    "save_as": 1,
-                    "condition": 1,
-                    "try_times": 1
-                }
-            },
-            save_file: {
-                required: { "args_text": 1, "content": 1 },
-                optional: {
-                    "name": 1,
-                    "pre_delay": 1,
-                    "post_delay": 1,
-                    "can_fail": 1,
-                    "mode": 1,
-                    "disabled": 1,
-                    "save_as": 1,
-                    "condition": 1,
-                    "try_times": 1
-                }
-            },
-            resize_window: {
-                required: { "window_title": 1, "args_text": 1 },
-                optional: {
-                    "name": 1,
-                    "pre_delay": 1,
-                    "post_delay": 1,
-                    "can_fail": 1,
-                    "disabled": 1,
-                    "save_as": 1,
-                    "condition": 1,
-                    "try_times": 1
-                }
-            },
-            minimize_window: {
-                required: { "window_title": 1 },
-                optional: {
-                    "name": 1,
-                    "pre_delay": 1,
-                    "post_delay": 1,
-                    "can_fail": 1,
-                    "disabled": 1,
-                    "save_as": 1,
-                    "condition": 1,
-                    "try_times": 1
-                }
-            },
-            retry_group: {
-                required: { "args_text": 1, "condition": 1 },
-                optional: {
-                    "name": 1,
-                    "pre_delay": 1,
-                    "post_delay": 1,
-                    "can_fail": 1,
-                    "disabled": 1,
-                    "save_as": 1,
-                    "try_times": 1
-                }
-            },
-            call_function: {
-                required: { "function_image": 1, "args_text": 1 },
-                optional: {
-                    "name": 1,
-                    "pre_delay": 1,
-                    "post_delay": 1,
-                    "can_fail": 1,
-                    "disabled": 1,
-                    "save_as": 1,
-                    "condition": 1,
-                    "try_times": 1
-                }
-            },
-            _keep_variables: {
-                required: {},
-                optional: {
-                    "disabled": 1,
-                    "condition": 1,
-                    "can_fail": 1
-                }
-            },
-            _begin_loop: {
-                required: {},
-                optional: {
-                    "disabled": 1,
-                    "condition": 1,
-                    "can_fail": 1
-                }
-            },
-            _break_loop: {
-                required: {},
-                optional: {
-                    "disabled": 1,
-                    "condition": 1,
-                    "can_fail": 1
-                }
-            }
-        };
 
-        function isEditable(ui) {
-            const dataIndx = ui.dataIndx;
-
-            switch (dataIndx) {
-                case 'state' || 'disabled':
-                    return true;
-                case 'running' || 'count' || 'last_time':
-                    return false;
-                case 'type':
-                    return true;
-                default:
-                    const rowType = ui.rowData?.type;
-                    if (!rowType) return false;
-
-                    const fields = actionTypeFields[rowType];
-                    if (!fields) return false;
-
-                    return fields.required[dataIndx] === 1 || fields.optional[dataIndx] === 1;
-            }
-        }
-
-        function isRequired(ui) {
-            const dataIndx = ui.dataIndx;
-            const rowType = ui.rowData?.type;
-
-            if (!rowType) return false;
-
-            const fields = actionTypeFields[rowType];
-            if (!fields) return false;
-
-            switch (dataIndx) {
-                case 'state':
-                case 'running':
-                case 'count':
-                case 'last_time':
-                    return false;
-
-                default:
-                    return fields.required[dataIndx] === 1;
-            }
-        }
-
-        function renderCell(ui) {
-            const dataIndx = ui.dataIndx;
-            let text = ui.cellData;
-            let cls = "";
-
-            if (isRequired(ui)) {
-                cls = CELL_CLASS.REQUIRED;
-            }
-            if (!isEditable(ui)) {
-                cls = CELL_CLASS.DISABLED;
-            }
-            switch (dataIndx) {
-                case 'type':
-                    const typeOptions = [
-                        { id: "wait", label: "Wait" },
-                        { id: "click", label: "Click" },
-                        { id: "input", label: "Input" },
-                        { id: "close_windows", label: "Close Windows" },
-                        { id: "remove_folder", label: "Remove Folder" },
-                        { id: "start_process", label: "Start Process" },
-                        { id: "activate_window", label: "Activate Window" },
-                        { id: "save_file", label: "Save File" },
-                        { id: "resize_window", label: "Resize Window" },
-                        { id: "minimize_window", label: "Minimize Window" },
-                        { id: "retry_group", label: "Retry Group" },
-                        { id: "call_function", label: "Call Function" },
-                        { id: "_keep_variables", label: "Keep Variables" },
-                        { id: "_begin_loop", label: "Begin Loop" },
-                        { id: "_break_loop", label: "Break Loop" },
-                    ];
-                    const typeOption = typeOptions.find(opt => opt.id === ui.cellData);
-                    text = typeOption ? typeOption.label : ui.cellData;
-                    break;
-
-                case 'mode':
-                    const modeOptions = [
-                        { id: "", label: "" },
-                        { id: "a", label: "Append" },
-                        { id: "w", label: "Overwrite" },
-                    ];
-                    const modeOption = modeOptions.find(opt => opt.id === ui.cellData);
-                    text = modeOption ? modeOption.label : ui.cellData;
-                    break;
-            }
-
-            return { text: text, cls: cls };
-        }
 
         async function initGridActions() {
+
+            function isEditable(ui) {
+                const dataIndx = ui.dataIndx;
+
+                switch (dataIndx) {
+                    case 'state' || 'disabled':
+                        return true;
+                    case 'running' || 'count' || 'last_time':
+                        return false;
+                    case 'type':
+                        return true;
+                    default:
+                        const rowType = ui.rowData?.type;
+                        if (!rowType) return false;
+
+                        const fields = actionTypeFields[rowType];
+                        if (!fields) return false;
+
+                        return fields.required[dataIndx] === 1 || fields.optional[dataIndx] === 1;
+                }
+            }
+
+            function isRequired(ui) {
+                const dataIndx = ui.dataIndx;
+                const rowType = ui.rowData?.type;
+
+                if (!rowType) return false;
+
+                const fields = actionTypeFields[rowType];
+                if (!fields) return false;
+
+                switch (dataIndx) {
+                    case 'state':
+                    case 'running':
+                    case 'count':
+                    case 'last_time':
+                        return false;
+
+                    default:
+                        return fields.required[dataIndx] === 1;
+                }
+            }
+
+            function renderCell(ui) {
+                const dataIndx = ui.dataIndx;
+                let text = ui.cellData;
+                let cls = "";
+
+                if (isRequired(ui)) {
+                    cls = CELL_CLASS.REQUIRED;
+                }
+                if (!isEditable(ui)) {
+                    cls = CELL_CLASS.DISABLED;
+                }
+                switch (dataIndx) {
+                    case 'type':
+                        const typeOptions = [
+                            { id: "wait", label: "Wait" },
+                            { id: "click", label: "Click" },
+                            { id: "input", label: "Input" },
+                            { id: "close_windows", label: "Close Windows" },
+                            { id: "remove_folder", label: "Remove Folder" },
+                            { id: "start_process", label: "Start Process" },
+                            { id: "activate_window", label: "Activate Window" },
+                            { id: "save_file", label: "Save File" },
+                            { id: "resize_window", label: "Resize Window" },
+                            { id: "minimize_window", label: "Minimize Window" },
+                            { id: "retry_group", label: "Retry Group" },
+                            { id: "call_function", label: "Call Function" },
+                            { id: "_keep_variables", label: "Keep Variables" },
+                            { id: "_begin_loop", label: "Begin Loop" },
+                            { id: "_break_loop", label: "Break Loop" },
+                        ];
+                        const typeOption = typeOptions.find(opt => opt.id === ui.cellData);
+                        text = typeOption ? typeOption.label : ui.cellData;
+                        break;
+
+                    case 'mode':
+                        const modeOptions = [
+                            { id: "", label: "" },
+                            { id: "a", label: "Append" },
+                            { id: "w", label: "Overwrite" },
+                        ];
+                        const modeOption = modeOptions.find(opt => opt.id === ui.cellData);
+                        text = modeOption ? modeOption.label : ui.cellData;
+                        break;
+                }
+
+                return { text: text, cls: cls };
+            }
+            
+            const actionTypeFields = {
+                wait: {
+                    required: { "function_image": 1 },
+                    optional: {
+                        "name": 1,
+                        "window_title": 1,
+                        "pre_delay": 1,
+                        "post_delay": 1,
+                        "can_fail": 1,
+                        "timeout": 1,
+                        "check_interval": 1,
+                        "confidence": 1,
+                        "disabled": 1,
+                        "save_as": 1,
+                        "condition": 1,
+                        "try_times": 1
+                    }
+                },
+                click: {
+                    required: { "function_image": 1 },
+                    optional: {
+                        "name": 1,
+                        "window_title": 1,
+                        "pre_delay": 1,
+                        "post_delay": 1,
+                        "can_fail": 1,
+                        "offset": 1,
+                        "confidence": 1,
+                        "disabled": 1,
+                        "save_as": 1,
+                        "condition": 1,
+                        "try_times": 1
+                    }
+                },
+                input: {
+                    required: { "args_text": 1 },
+                    optional: {
+                        "name": 1,
+                        "pre_delay": 1,
+                        "post_delay": 1,
+                        "can_fail": 1,
+                        "disabled": 1,
+                        "save_as": 1,
+                        "condition": 1,
+                        "try_times": 1
+                    }
+                },
+                close_windows: {
+                    required: { "window_title": 1 },
+                    optional: {
+                        "name": 1,
+                        "pre_delay": 1,
+                        "post_delay": 1,
+                        "can_fail": 1,
+                        "disabled": 1,
+                        "save_as": 1,
+                        "condition": 1,
+                        "try_times": 1
+                    }
+                },
+                remove_folder: {
+                    required: { "args_text": 1 },
+                    optional: {
+                        "name": 1,
+                        "pre_delay": 1,
+                        "post_delay": 1,
+                        "can_fail": 1,
+                        "disabled": 1,
+                        "save_as": 1,
+                        "condition": 1,
+                        "try_times": 1
+                    }
+                },
+                start_process: {
+                    required: { "args_text": 1 },
+                    optional: {
+                        "name": 1,
+                        "pre_delay": 1,
+                        "post_delay": 1,
+                        "can_fail": 1,
+                        "disabled": 1,
+                        "save_as": 1,
+                        "condition": 1,
+                        "try_times": 1
+                    }
+                },
+                activate_window: {
+                    required: { "window_title": 1 },
+                    optional: {
+                        "name": 1,
+                        "pre_delay": 1,
+                        "post_delay": 1,
+                        "can_fail": 1,
+                        "disabled": 1,
+                        "save_as": 1,
+                        "condition": 1,
+                        "try_times": 1
+                    }
+                },
+                save_file: {
+                    required: { "args_text": 1, "content": 1 },
+                    optional: {
+                        "name": 1,
+                        "pre_delay": 1,
+                        "post_delay": 1,
+                        "can_fail": 1,
+                        "mode": 1,
+                        "disabled": 1,
+                        "save_as": 1,
+                        "condition": 1,
+                        "try_times": 1
+                    }
+                },
+                resize_window: {
+                    required: { "window_title": 1, "args_text": 1 },
+                    optional: {
+                        "name": 1,
+                        "pre_delay": 1,
+                        "post_delay": 1,
+                        "can_fail": 1,
+                        "disabled": 1,
+                        "save_as": 1,
+                        "condition": 1,
+                        "try_times": 1
+                    }
+                },
+                minimize_window: {
+                    required: { "window_title": 1 },
+                    optional: {
+                        "name": 1,
+                        "pre_delay": 1,
+                        "post_delay": 1,
+                        "can_fail": 1,
+                        "disabled": 1,
+                        "save_as": 1,
+                        "condition": 1,
+                        "try_times": 1
+                    }
+                },
+                retry_group: {
+                    required: { "args_text": 1, "condition": 1 },
+                    optional: {
+                        "name": 1,
+                        "pre_delay": 1,
+                        "post_delay": 1,
+                        "can_fail": 1,
+                        "disabled": 1,
+                        "save_as": 1,
+                        "try_times": 1
+                    }
+                },
+                call_function: {
+                    required: { "function_image": 1, "args_text": 1 },
+                    optional: {
+                        "name": 1,
+                        "pre_delay": 1,
+                        "post_delay": 1,
+                        "can_fail": 1,
+                        "disabled": 1,
+                        "save_as": 1,
+                        "condition": 1,
+                        "try_times": 1
+                    }
+                },
+                _keep_variables: {
+                    required: {},
+                    optional: {
+                        "disabled": 1,
+                        "condition": 1,
+                        "can_fail": 1
+                    }
+                },
+                _begin_loop: {
+                    required: {},
+                    optional: {
+                        "disabled": 1,
+                        "condition": 1,
+                        "can_fail": 1
+                    }
+                },
+                _break_loop: {
+                    required: {},
+                    optional: {
+                        "disabled": 1,
+                        "condition": 1,
+                        "can_fail": 1
+                    }
+                }
+            };
             const columnActionsModel = [
                 {
-                    dataIndx: "state", title: `<input class="form-check-input" type="checkbox"/>`,
+                    dataIndx: "state", title: "",
                     maxWidth: 50,
                     minWidth: 50,
                     resizable: false,
@@ -467,12 +414,6 @@
                     editor: false,
                     dataType: 'bool',
                     cb: { all: false, header: true, check: true, uncheck: false },
-                    filter: filterWidget(),
-                    render: function (ui) {
-                        return {
-                            text: `<input class="form-check-input" type="checkbox" ${!!ui?.cellData ? 'checked' : ''}/>`
-                        };
-                    }
                 },
                 {
                     dataIndx: "running", title: "Running",
@@ -481,18 +422,11 @@
                     align: "center",
                     editable: isEditable,
                     editor: false,
-                    editable: isEditable,
-                    cb: { all: false, header: true, check: true, uncheck: false },
-                    filter: filterWidget(),
+                    cb: { all: false, header: false, check: true, uncheck: false },
                     properties: {
                         default_value: false, prevent_copy_value: true
                     },
-                    cls: CELL_CLASS.DISABLED,
-                    render: function (ui) {
-                        return {
-                            text: `<input class="form-check-input" type="checkbox" ${!!ui?.cellData ? 'checked' : ''}/>`
-                        };
-                    }
+                    cls: CELL_CLASS.DISABLED
                 },
                 {
                     dataIndx: "count", title: "Count",
@@ -502,7 +436,6 @@
                     cls: CELL_CLASS.DISABLED,
                     properties: { default_value: 0, prevent_copy_value: true },
                     editable: isEditable,
-                    filter: filterWidget(),
                 },
                 {
                     dataIndx: "last_time", title: "Last Time",
@@ -512,10 +445,9 @@
                     properties: { default_value: "", prevent_copy_value: true },
                     cls: CELL_CLASS.DISABLED,
                     editable: isEditable,
-                    filter: filterWidget(),
                 },
                 {
-                    dataIndx: "disabled", title: `<input class="form-check-input" type="checkbox"/>&nbsp;Disabled`,
+                    dataIndx: "disabled", title: "Disabled",
                     width: 80,
                     align: "center",
                     editable: isEditable,
@@ -524,19 +456,12 @@
                     dataType: 'bool',
                     cb: { all: false, header: true, check: true, uncheck: false },
                     properties: { default_value: false },
-                    filter: filterWidget(),
-                    render: function (ui) {
-                        return {
-                            text: `<input class="form-check-input" type="checkbox" ${!!ui?.cellData ? 'checked' : ''}/>`
-                        };
-                    }
                 },
                 {
                     dataIndx: "name", title: "Name",
                     width: 120,
                     editable: isEditable,
                     properties: { default_value: "" },
-                    filter: filterWidget(),
                     render: renderCell
                 },
                 {
@@ -544,7 +469,6 @@
                     width: 150,
                     editable: isEditable,
                     properties: { default_value: "" },
-                    filter: filterWidget(),
                     render: renderCell
                 },
                 {
@@ -578,7 +502,6 @@
                     properties: {
                         default_value: "click"
                     },
-                    filter: filterWidget(),
                     render: renderCell
                 },
                 {
@@ -586,7 +509,6 @@
                     width: 150,
                     editable: isEditable,
                     properties: { default_value: "" },
-                    filter: filterWidget(),
                     render: renderCell
                 },
                 {
@@ -594,7 +516,6 @@
                     width: 200,
                     editable: isEditable,
                     properties: { default_value: "" },
-                    filter: filterWidget(),
                     render: renderCell
                 },
                 {
@@ -603,7 +524,6 @@
                     align: "center",
                     editable: isEditable,
                     properties: { default_value: "" },
-                    filter: filterWidget(),
                     render: renderCell
                 },
                 {
@@ -612,7 +532,6 @@
                     align: "center",
                     editable: isEditable,
                     properties: { default_value: "" },
-                    filter: filterWidget(),
                     render: renderCell
                 },
                 {
@@ -621,7 +540,6 @@
                     align: "center",
                     editable: isEditable,
                     properties: { default_value: 0 },
-                    filter: filterWidget(),
                     render: renderCell
                 },
                 {
@@ -630,11 +548,10 @@
                     align: "center",
                     editable: isEditable,
                     properties: { default_value: 0 },
-                    filter: filterWidget(),
                     render: renderCell
                 },
                 {
-                    dataIndx: "can_fail", title: `<input class="form-check-input" type="checkbox"/>&nbsp;Can Fail`,
+                    dataIndx: "can_fail", title: "Can Fail",
                     width: 80,
                     align: "center",
                     editable: isEditable,
@@ -642,13 +559,7 @@
                     type: 'checkbox',
                     dataType: 'bool',
                     cb: { all: false, header: true, check: true, uncheck: false },
-                    properties: { default_value: false },
-                    filter: filterWidget(),
-                    render: function (ui) {
-                        return {
-                            text: `<input class="form-check-input" type="checkbox" ${!!ui?.cellData ? 'checked' : ''}/>`
-                        };
-                    }
+                    properties: { default_value: false }
                 },
                 {
                     dataIndx: "try_times", title: "Try Times",
@@ -656,7 +567,6 @@
                     align: "center",
                     editable: isEditable,
                     properties: { default_value: 1 },
-                    filter: filterWidget(),
                     render: renderCell
                 },
                 {
@@ -665,7 +575,6 @@
                     align: "center",
                     editable: isEditable,
                     properties: { default_value: 0 },
-                    filter: filterWidget(),
                     render: renderCell
                 },
                 {
@@ -674,7 +583,6 @@
                     align: "center",
                     editable: isEditable,
                     properties: { default_value: 0 },
-                    filter: filterWidget(),
                     render: renderCell
                 },
                 {
@@ -683,7 +591,6 @@
                     align: "center",
                     editable: isEditable,
                     properties: { default_value: 0.8 },
-                    filter: filterWidget(),
                     render: renderCell
                 },
                 {
@@ -692,7 +599,6 @@
                     align: "center",
                     editable: isEditable,
                     properties: { default_value: "0,0" },
-                    filter: filterWidget(),
                     render: renderCell
                 },
                 {
@@ -713,7 +619,6 @@
                     properties: {
                         default_value: "",
                     },
-                    filter: filterWidget(),
                     render: renderCell
                 },
                 {
@@ -723,7 +628,6 @@
                         type: 'textarea',
                     },
                     properties: { default_value: "" },
-                    filter: filterWidget(),
                     render: renderCell
                 },
             ]
@@ -792,60 +696,35 @@
                         }
                     ]
                 },
-                resizable: false
-            };
-            gridActions = pq.grid("#gridActions", gridActionsOptions);
-
-            gridActions.on("cellSave", function (evt, ui) {
-                if (ui.dataIndx === 'type') {
-                    gridActions.refreshView();
+                resizable: false,
+                cellSave: function (evt, ui) {
+                    if (ui.dataIndx === 'type') {
+                        gridActions.refreshView();
+                    }
+                },
+                change: function (evt, ui) {
+                    this.refreshView();
                 }
-            });
+            };
 
-            gridActions.refreshFilter = function () {
-                selectFilter("type");
-                selectFilter("mode");
-                textFilter("count");
-                textFilter("last_time");
-                textFilter("name");
-                textFilter("condition");
-                textFilter("function_image");
-                textFilter("args_text");
-                textFilter("save_as");
-                textFilter("window_title");
-                textFilter("confidence");
-                textFilter("offset");
-                textFilter("timeout");
-                textFilter("check_interval");
-                textFilter("try_times");
-                textFilter("pre_delay");
-                textFilter("post_delay");
-                checkboxFilter("disabled");
-                checkboxFilter("can_fail");
-                checkboxFilter("running");
-                checkboxFilter("state");
-            }
+            gridActions = commonPQGrid.init("#gridActions", gridActionsOptions);
+
             await loadDataFromPython();
         }
         async function initGridVars() {
             const columnVarsModel = [
                 {
-                    title: `<input class="form-check-input" type="checkbox"/>`,
+                    title: "",
                     dataIndx: "state",
                     maxWidth: 30,
                     minWidth: 30,
                     resizable: false,
-                    type: 'checkBoxSelection',
+                    type: 'checkbox',
                     align: "center",
                     sortable: false,
                     editor: false,
                     dataType: 'bool',
                     cb: { all: false, header: true, check: true, uncheck: false },
-                    render: function (ui) {
-                        return {
-                            text: `<input class="form-check-input" type="checkbox" ${!!ui?.cellData ? 'checked' : ''}/>`
-                        };
-                    }
                 },
                 {
                     dataIndx: "name",
@@ -960,7 +839,6 @@
 
                 gridData = data;
                 gridActions.option("dataModel.data", gridData);
-                gridActions.refreshFilter();
                 gridActions.refreshDataAndView();
                 showNotification(`Loaded ${data.length} rows successfully`, 'success');
             } catch (error) {
