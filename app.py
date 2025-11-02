@@ -23,7 +23,9 @@ class API:
             {"type": "click","step_number": 8,"disabled": False,"image": "images\\screenshot_20250913_230333.png","pre_delay": 0.0,"post_delay": 0.0,"can_fail": True,"try_times": 1,"confidence": 0.8,"offset": "0,0"},
         ]
         self.next_id = 11
-    
+    def ready(self):
+        print("Python: ready called")
+
     def get_data(self):
         print(f"Python: get_data called, returning {len(self.data)} rows")
         return self.data
@@ -110,9 +112,6 @@ SHELL = """
 APP_ROOT = Path(__file__).parent
 ENTRY = APP_ROOT / 'index.html'
 
-def boot(window):
-    window.load_url(str(ENTRY))
-
 def main():
     debug = False
     width = 800
@@ -125,16 +124,16 @@ def main():
         height = int(sys.argv[sys.argv.index("--height") + 1])
 
     api = API()
-    w = webview.create_window(
+    window = webview.create_window(
         title='Seemyclick',
         js_api=api,
         width=width, height=height,
         resizable=True,
         background_color='#FFFFFF',
-        html=SHELL
+        url=str(ENTRY)
     )
-    webview.start(func=boot, args=(w,), gui='edgechromium',
-                  http_server=True, private_mode=False, debug=debug)
+    webview.start(gui='edgechromium', http_server=True, private_mode=False, debug=debug)
+    print("Webview started")
 
 if __name__ == '__main__':
     main()

@@ -84,7 +84,7 @@
     <script>
         // Wait for pywebview API to be ready
         window.addEventListener('pywebviewready', function () {
-            initGridVars();
+            setTimeout(() => initGridVars(), 50);
             setTimeout(() => initGridActions(), 50);
         });
         var loopCount = 0;
@@ -537,7 +537,7 @@
                     render: renderCell
                 },
                 {   dataIndx: "type", title: "Type",
-                    width: 150,
+                    width: 180,
                     align: "center",
                     editable: isEditable,
                     editor: {
@@ -721,9 +721,7 @@
                 filterModel: { on: true, mode: "AND", header: true },
                 numberCell: { show: false },
                 title: "Actions",
-                scrollModel: { 
-                    autoFit: false,
-                },
+                scrollModel: { autoFit: false},
                 virtualX: true, // Enable virtual scrolling for columns
                 virtualY: true, // Enable virtual scrolling for rows
                 virtualXHeader: true,
@@ -804,7 +802,7 @@
             await loadDataFromPython();
         }
         async function initGridVars() {
-            const columnVarsModel = VARS_COLUMN_MODEL = [
+            const columnVarsModel = [
                 {
                     title: `<input class="form-check-input" type="checkbox"/>`,
                     dataIndx: "state",
@@ -888,10 +886,7 @@
                 filterModel: { on: true, mode: "AND", header: true },
                 numberCell: { show: false },
                 title: "Variables",
-                scrollModel: { 
-                    autoFit: false,
-                    pace: 'optimum'
-                },
+                scrollModel: { autoFit: false },
                 virtualX: true,
                 virtualY: true,
                 resizable: true,
