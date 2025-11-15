@@ -14,7 +14,7 @@ os.environ['WEBVIEW2_USER_DATA_FOLDER'] = webview_data_dir
 class API:
     def __init__(self):
         self.data = [
-            {"type": "click","step_number": 1,"disabled": True,"image": "images\\screenshot_20250913_230333.png","pre_delay": 0.0,"post_delay": 0.0,"can_fail": True,"try_times": 1,"confidence": 0.8,"offset": "0,0"},
+            {"type": "click","step_number": 1,"disabled": True,"image": "images\\screenshot_20250913_230333.png","pre_delay": 0.0,"post_delay": 0.0,"can_fail": True,"timeout": 0.0,"try_times": 1,"confidence": 0.8,"offset": "0,0"},
             {"type": "remove_folder","step_number": 2,"disabled": False,"image": "images\\screenshot_20250913_230333.png","pre_delay": 0.0,"post_delay": 0.0,"can_fail": True,"try_times": 1,"confidence": 0.8,"offset": "0,0"},
             {"type": "click","step_number": 3,"disabled": False,"image": "images\\screenshot_20250913_230333.png","pre_delay": 0.0,"post_delay": 0.0,"can_fail": True,"try_times": 1,"confidence": 0.8,"offset": "0,0"},
             {"type": "click","step_number": 4,"disabled": False,"image": "images\\screenshot_20250913_230333.png","pre_delay": 0.0,"post_delay": 0.0,"can_fail": True,"try_times": 1,"confidence": 0.8,"offset": "0,0"},
@@ -126,15 +126,39 @@ def main():
     if "--height" in sys.argv:
         height = int(sys.argv[sys.argv.index("--height") + 1])
 
-    api = API()
+    # Set additional WebView2 environment variables for memory control
+    os.environ['WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS'] = ' '.join([
+        '--disable-gpu',  # Disable GPU acceleration if not needed
+        '--disable-software-rasterizer',
+        '--disable-extensions',
+        '--disable-plugins',
+        '--disable-dev-shm-usage',  # Reduce shared memory usage
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--js-flags=--max-old-space-size=512',  # Limit JS heap to 512MB
+        '--disable-background-networking',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-breakpad',
+        '--disable-component-extensions-with-background-pages',
+        '--disable-features=TranslateUI,BlinkGenPropertyTrees',
+        '--disable-ipc-flooding-protection',
+        '--disable-renderer-backgrounding',
+    ])
+    
+    # Create window first
     window = webview.create_window(
         title='Seemyclick',
-        js_api=api,
         width=width, height=height,
         resizable=True,
         background_color='#FFFFFF',
         html=SHELL
     )
+    
+    # Create API with window reference and set it as js_api
+    api = API(window)
+    window.js_api = api
+    
     webview.start(func=boot, args=(window,),gui='edgechromium', http_server=True, private_mode=False, debug=debug)
 
     print("Webview started")

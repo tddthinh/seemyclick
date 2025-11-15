@@ -414,6 +414,7 @@
                     editor: false,
                     dataType: 'bool',
                     cb: { all: false, header: true, check: true, uncheck: false },
+                    properties: { default_value: false, prevent_copy_value: true },
                 },
                 {
                     dataIndx: "running", title: "Running",
@@ -422,10 +423,9 @@
                     align: "center",
                     editable: isEditable,
                     editor: false,
+                    dataType: 'bool',
                     cb: { all: false, header: false, check: true, uncheck: false },
-                    properties: {
-                        default_value: false, prevent_copy_value: true
-                    },
+                    properties: { default_value: false, prevent_copy_value: true },
                     cls: CELL_CLASS.DISABLED
                 },
                 {
@@ -433,8 +433,9 @@
                     align: "center",
                     editable: isEditable,
                     width: 60,
+                    dataType: 'integer',
                     cls: CELL_CLASS.DISABLED,
-                    properties: { default_value: 0, prevent_copy_value: true },
+                    properties: { default_value: null, prevent_copy_value: true },
                     editable: isEditable,
                 },
                 {
@@ -442,6 +443,7 @@
                     align: "center",
                     editable: isEditable,
                     width: 130,
+                    dataType: 'string',
                     properties: { default_value: "", prevent_copy_value: true },
                     cls: CELL_CLASS.DISABLED,
                     editable: isEditable,
@@ -461,6 +463,7 @@
                     dataIndx: "name", title: "Name",
                     width: 120,
                     editable: isEditable,
+                    dataType: 'string',
                     properties: { default_value: "" },
                     render: renderCell
                 },
@@ -468,6 +471,7 @@
                     dataIndx: "condition", title: "Condition",
                     width: 150,
                     editable: isEditable,
+                    dataType: 'string',
                     properties: { default_value: "" },
                     render: renderCell
                 },
@@ -476,6 +480,7 @@
                     width: 180,
                     align: "center",
                     editable: isEditable,
+                    dataType: 'string',
                     editor: {
                         type: "select",
                         valueIndx: "value",
@@ -499,15 +504,14 @@
                         ],
                         listeners: ['change']
                     },
-                    properties: {
-                        default_value: "click"
-                    },
+                    properties: { default_value: "click" },
                     render: renderCell
                 },
                 {
                     dataIndx: "function_image", title: "Function/Image",
                     width: 150,
                     editable: isEditable,
+                    dataType: 'string',
                     properties: { default_value: "" },
                     render: renderCell
                 },
@@ -515,6 +519,7 @@
                     dataIndx: "args_text", title: "Arguments",
                     width: 200,
                     editable: isEditable,
+                    dataType: 'string',
                     properties: { default_value: "" },
                     render: renderCell
                 },
@@ -523,6 +528,7 @@
                     width: 120,
                     align: "center",
                     editable: isEditable,
+                    dataType: 'string',
                     properties: { default_value: "" },
                     render: renderCell
                 },
@@ -531,6 +537,7 @@
                     width: 150,
                     align: "center",
                     editable: isEditable,
+                    dataType: 'string',
                     properties: { default_value: "" },
                     render: renderCell
                 },
@@ -539,7 +546,8 @@
                     width: 80,
                     align: "center",
                     editable: isEditable,
-                    properties: { default_value: 0 },
+                    dataType: 'float',
+                    properties: { default_value: 0.0 },
                     render: renderCell
                 },
                 {
@@ -547,7 +555,8 @@
                     width: 80,
                     align: "center",
                     editable: isEditable,
-                    properties: { default_value: 0 },
+                    dataType: 'float',
+                    properties: { default_value: 0.0 },
                     render: renderCell
                 },
                 {
@@ -566,6 +575,7 @@
                     width: 80,
                     align: "center",
                     editable: isEditable,
+                    dataType: 'integer',
                     properties: { default_value: 1 },
                     render: renderCell
                 },
@@ -574,7 +584,8 @@
                     width: 80,
                     align: "center",
                     editable: isEditable,
-                    properties: { default_value: 0 },
+                    dataType: 'float',
+                    properties: { default_value: 0.0 },
                     render: renderCell
                 },
                 {
@@ -582,7 +593,8 @@
                     width: 100,
                     align: "center",
                     editable: isEditable,
-                    properties: { default_value: 0 },
+                    dataType: 'float',
+                    properties: { default_value: 0.0 },
                     render: renderCell
                 },
                 {
@@ -590,6 +602,7 @@
                     width: 100,
                     align: "center",
                     editable: isEditable,
+                    dataType: 'float',
                     properties: { default_value: 0.8 },
                     render: renderCell
                 },
@@ -598,6 +611,7 @@
                     width: 80,
                     align: "center",
                     editable: isEditable,
+                    dataType: 'string',
                     properties: { default_value: "0,0" },
                     render: renderCell
                 },
@@ -606,27 +620,25 @@
                     width: 100,
                     align: "center",
                     editable: isEditable,
+                    dataType: 'string',
                     editor: {
                         type: "select",
-                        valueIndx: "id",
+                        valueIndx: "value",
                         labelIndx: "label",
                         options: [
-                            { id: "", label: "" },
-                            { id: "a", label: "Append" },
-                            { id: "w", label: "Overwrite" },
+                            { value: "", label: "" },
+                            { value: "a", label: "Append" },
+                            { value: "w", label: "Overwrite" },
                         ]
                     },
-                    properties: {
-                        default_value: "",
-                    },
+                    properties: { default_value: "" },
                     render: renderCell
                 },
                 {
                     dataIndx: "content", title: "Content",
                     width: 200,
-                    editor: {
-                        type: 'textarea',
-                    },
+                    dataType: 'string',
+                    editor: { type: 'textarea' },
                     properties: { default_value: "" },
                     render: renderCell
                 },
@@ -647,16 +659,19 @@
                     resizable: true,
                 },
                 freezeCols: 1,
-                postRenderInterval: 0,
+                postRenderInterval: 200,
                 filterModel: { on: true, mode: "AND", header: true },
-                numberCell: { show: false },
+                numberCell: { show: true },
                 title: "Actions",
-                scrollModel: { autoFit: false },
+                scrollModel: { 
+                    autoFit: false,
+                    pace: 'fast',
+                },
                 virtualX: true, // Enable virtual scrolling for columns
                 virtualY: true, // Enable virtual scrolling for rows
                 virtualXHeader: true,
                 resizable: true,
-                track: false, // Disable change tracking for better performance
+                track: true, // Disable change tracking for better performance
                 stripeRows: false, // Reduces rendering overhead
                 swipeModel: { on: false },
                 wrap: false,
@@ -664,27 +679,58 @@
                 editModel: {
                     clicksToEdit: 2
                 },
+                historyModel: { on: true },
                 toolbar: {
                     items: [
                         {
                             type: 'button',
                             label: 'Add',
                             listener: function () {
-                                console.log('Add button clicked');
+                                let colModel = gridActions.option("colModel");
+                                let newRow = {};
+                                colModel.forEach(col => {
+                                    newRow[col.dataIndx] = col.properties?.default_value;
+                                });
+                                gridActions.addRow({newRow: newRow, refresh: false, checkEditable: false});
                             }
                         },
                         {
                             type: 'button',
                             label: 'Delete',
                             listener: function () {
-                                console.log('Delete button clicked');
+                                let selectedRows = gridActions.getData().flatMap((e,i)=>({state: e.state, rowIndx: i})).filter(e=>e.state);
+                                if(selectedRows.length > 0){
+                                    gridActions.deleteRow({rowList: selectedRows});
+                                } else {
+                                    alert('No rows selected to delete');
+                                }
                             }
                         },
                         {
                             type: 'button',
                             label: 'Copy',
                             listener: function () {
-                                console.log('Copy button clicked');
+                                let colModel = gridActions.option("colModel");
+                                let selectedRows = gridActions.getData().filter(e=>e.state);
+                                if(selectedRows.length > 0){
+                                    let data = gridActions.getData();
+                                    selectedRows.forEach(row => {
+                                        row.state = false;
+
+                                        let clonedRow = _.cloneDeep(row);
+                                        colModel.forEach(col => {
+                                            if(col.properties?.prevent_copy_value){
+                                                clonedRow[col.dataIndx] = col.properties?.default_value;
+                                            }
+                                        });
+                                        data.push(clonedRow);
+                                    });
+
+                                    gridActions.option("dataModel.data", data);
+                                    gridActions.refreshDataAndView();
+                                } else {
+                                    alert('No rows selected to copy');
+                                }
                             }
                         },
                         {
@@ -703,7 +749,18 @@
                     }
                 },
                 change: function (evt, ui) {
-                    this.refreshView();
+                    let grid = this;
+                    let obj = {};
+                    if(ui.source === 'add'){
+                        obj.header = false;
+                    }
+                    let checkboxDataIndxList = grid.options.colModel.filter(e=>e.type === 'checkbox').flatMap(e=>e.dataIndx);
+                    let changedDataIndxList = _.uniq(ui.rowList.flatMap(e=>_.keys(e.newRow)));
+                    if(changedDataIndxList.length == 1 && checkboxDataIndxList.includes(changedDataIndxList[0])){
+                        obj.header = false;
+                    }
+
+                    grid.refreshDataAndView(obj);
                 }
             };
 
@@ -730,45 +787,25 @@
                     dataIndx: "name",
                     title: "Variable Name",
                     width: 120,
-                    properties: { default_value: "" },
-                    filter: {
-                        type: 'textbox',
-                        condition: 'contain',
-                        listeners: ['keyup']
-                    }
+                    properties: { default_value: "" }
                 },
                 {
                     dataIndx: "value",
                     title: "Current Value",
                     width: 150,
-                    properties: { default_value: "" },
-                    filter: {
-                        type: 'textbox',
-                        condition: 'contain',
-                        listeners: ['keyup']
-                    }
+                    properties: { default_value: "" }
                 },
                 {
                     dataIndx: "step",
                     title: "Changed By Step",
                     width: 120,
-                    properties: { default_value: "" },
-                    filter: {
-                        type: 'textbox',
-                        condition: 'contain',
-                        listeners: ['keyup']
-                    }
+                    properties: { default_value: "" }
                 },
                 {
                     dataIndx: "default_value",
                     title: "Default Value",
                     width: 120,
-                    properties: { default_value: "" },
-                    filter: {
-                        type: 'textbox',
-                        condition: 'contain',
-                        listeners: ['keyup']
-                    }
+                    properties: { default_value: "" }
                 },
             ]
             const gridVarsOptions = {
@@ -829,7 +866,7 @@
                     ]
                 },
             };
-            gridVars = pq.grid("#gridVars", gridVarsOptions);
+            gridVars = commonPQGrid.init("#gridVars", gridVarsOptions);
         }
         async function loadDataFromPython() {
             try {
@@ -846,29 +883,10 @@
                 showNotification('Error loading data from Python', 'error');
             }
         }
+
         $(document).ready(function () {
-            // Add row button
             $('#btnAdd').on('click', async function () {
-                try {
-                    const newRow = {
-                        id: null, // Will be assigned by Python backend
-                        company: 'New Company',
-                        revenues: 0,
-                        profits: 0
-                    };
-
-                    const result = await pywebview.api.add_row(newRow);
-
-                    if (result.success) {
-                        await loadDataFromPython();
-                        showNotification('Row added successfully', 'success');
-                    } else {
-                        showNotification('Error: ' + result.message, 'error');
-                    }
-                } catch (error) {
-                    console.error('Error adding row:', error);
-                    showNotification('Error adding row', 'error');
-                }
+                gridActions.addRow({state: false, type: '', name: '', value: '', step: '', default_value: ''});
             });
 
             // Delete row button

@@ -1,6 +1,6 @@
 const commonPQGrid = {
     filter: {
-        filterWidget(grid, options) {
+        filterWidget(options) {
             let filter = {
                 type: 'select',
                 on: true,
@@ -10,13 +10,14 @@ const commonPQGrid = {
                 valueIndx: "value",
                 labelIndx: "label",
                 listeners: ['change'],
-                init: function () {
+                init: function (ui) {
+                    const {column, dataIndx} = ui;
                     $(this).pqSelect({
                         checkbox: true,
                         radio: true,
                         width: '100%'
                     });
-                    pqselect = $(this).data('paramquery-pqSelect')
+                    pqselect = $(this).data('paramquery-pqSelect');
                     $search_div1 = pqselect.$popupCont.find(".pq-select-search-div1").detach();
                     pqselect.$popupCont.find(".ui-icon.ui-icon-search").after($search_div1);
                 },
@@ -56,11 +57,16 @@ const commonPQGrid = {
             filter.cache = null;
             filter.options = options;
         },
+        apply: function(options){
+            let columnModel = options.colModel;
+            columnModel.forEach(column => {
+                let filterOptions = column.filter;
+                column.filter = this.filterWidget(options, filterOptions);
+            });
+        },
         refresh(grid) {
             let columnModel = grid.options.colModel;
             columnModel.forEach(column => {
-                let filterOptions = column.filter;
-                column.filter = this.filterWidget(grid, filterOptions);
                 if(column.editor?.type === 'select'){
                     this.selectFilter(grid, column.dataIndx);
                 }
@@ -95,6 +101,7 @@ const commonPQGrid = {
     },
     init(gridId, options) {
         commonPQGrid.render.apply(options);
+        commonPQGrid.filter.apply(options);
         let grid = pq.grid(gridId, options);
 
         if(!grid.iRefresh._o_refresh){
