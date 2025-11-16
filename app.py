@@ -1,9 +1,8 @@
-import glob
 import webview
-import json
 import os
 import sys
 from pathlib import Path
+from src.ui.screenshot_overlay import ScreenshotOverlay
 
 # Set WebView2 user data folder to avoid permission issues
 webview_data_dir = os.path.join(os.getenv('TEMP'), 'webview_data')
@@ -24,78 +23,50 @@ class API:
             {"type": "click","step_number": 8,"disabled": False,"image": "images\\screenshot_20250913_230333.png","pre_delay": 0.0,"post_delay": 0.0,"can_fail": True,"try_times": 1,"confidence": 0.8,"offset": "0,0"},
         ]
         self.next_id = 11
+        self.overlay = None
         
     def get_data(self):
         print(f"Python: get_data called, returning {len(self.data)} rows")
         return self.data
     
-    def update_row(self, row_index, row_data):
+    def capture_screenshot(self):
+        """Take screenshot using Tkinter overlay"""
+        print("Python: capture_screenshot called")
+        
         try:
-            print(f"Python: update_row called with index={row_index}, data={row_data}")
+            if self.overlay is not None:
+                try:
+                    self.overlay.close()
+                    print("Previous overlay closed")
+                except:
+                    pass
+                self.overlay = None
             
-            # Find and update the row by ID
-            row_id = row_data.get('id')
-            if row_id:
-                for i, item in enumerate(self.data):
-                    if item['id'] == row_id:
-                        self.data[i] = row_data
-                        print(f"Python: Row with id={row_id} updated successfully")
-                        return {'success': True, 'message': 'Row updated successfully'}
+            self.overlay = ScreenshotOverlay()
+            screenshot_path = self.overlay.capture()
+            
+            if screenshot_path:
+                result = {'success': True, 'path': screenshot_path, 'status': 'ok'}
             else:
-                # If no ID, use index
-                if 0 <= row_index < len(self.data):
-                    self.data[row_index] = row_data
-                    print(f"Python: Row at index={row_index} updated successfully")
-                    return {'success': True, 'message': 'Row updated successfully'}
+                result = {'success': False, 'error': 'Screenshot cancelled', 'status': 'cancelled'}
             
-            return {'success': False, 'message': 'Row not found'}
+            print(f"Screenshot result: {result}")
+            
+            self.overlay.close()
+            self.overlay = None
+            return result
+            
         except Exception as e:
-            print(f"Python: Error updating row: {e}")
-            return {'success': False, 'message': str(e)}
-    
-    def add_row(self, row_data):
-        try:
-            print(f"Python: add_row called with data={row_data}")
+            result = {'success': False, 'error': str(e), 'status': 'error'}
+            print(f"Screenshot error: {result}")
+            if self.overlay:
+                try:
+                    self.overlay.close()
+                except:
+                    pass
+                self.overlay = None
+            return result
 
-            if 'id' not in row_data or row_data['id'] is None:
-                row_data['id'] = self.next_id
-                self.next_id += 1
-            
-            self.data.append(row_data)
-            print(f"Python: Row added successfully, new row count: {len(self.data)}")
-            return {'success': True, 'message': 'Row added successfully', 'row': row_data}
-        except Exception as e:
-            print(f"Python: Error adding row: {e}")
-            return {'success': False, 'message': str(e)}
-    
-    def delete_row(self, row_index):
-        try:
-            print(f"Python: delete_row called with index={row_index}")
-            
-            if 0 <= row_index < len(self.data):
-                deleted_row = self.data.pop(row_index)
-                print(f"Python: Row deleted successfully: {deleted_row}")
-                return {'success': True, 'message': 'Row deleted successfully'}
-            else:
-                return {'success': False, 'message': 'Invalid row index'}
-        except Exception as e:
-            print(f"Python: Error deleting row: {e}")
-            return {'success': False, 'message': str(e)}
-    
-    def delete_row_by_id(self, row_id):
-        try:
-            print(f"Python: delete_row_by_id called with id={row_id}")
-            
-            for i, item in enumerate(self.data):
-                if item['id'] == row_id:
-                    deleted_row = self.data.pop(i)
-                    print(f"Python: Row with id={row_id} deleted successfully: {deleted_row}")
-                    return {'success': True, 'message': 'Row deleted successfully'}
-            
-            return {'success': False, 'message': 'Row not found'}
-        except Exception as e:
-            print(f"Python: Error deleting row: {e}")
-            return {'success': False, 'message': str(e)}
 
 SHELL = """
 <!doctype html><html><head>
@@ -108,6 +79,7 @@ SHELL = """
 </style>
 </head><body><div class="center"><div class="spinner"></div></div></body></html>
 """
+
 APP_ROOT = Path(__file__).parent
 ENTRY = APP_ROOT / 'index.html'
 
@@ -119,6 +91,7 @@ def main():
     debug = False
     width = 800
     height = 800
+    
     if "--debug" in sys.argv:
         debug = True
     if "--width" in sys.argv:
@@ -126,16 +99,15 @@ def main():
     if "--height" in sys.argv:
         height = int(sys.argv[sys.argv.index("--height") + 1])
 
-    # Set additional WebView2 environment variables for memory control
     os.environ['WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS'] = ' '.join([
-        '--disable-gpu',  # Disable GPU acceleration if not needed
+        '--disable-gpu',
         '--disable-software-rasterizer',
         '--disable-extensions',
         '--disable-plugins',
-        '--disable-dev-shm-usage',  # Reduce shared memory usage
+        '--disable-dev-shm-usage',
         '--no-sandbox',
         '--disable-setuid-sandbox',
-        '--js-flags=--max-old-space-size=512',  # Limit JS heap to 512MB
+        '--js-flags=--max-old-space-size=512',
         '--disable-background-networking',
         '--disable-background-timer-throttling',
         '--disable-backgrounding-occluded-windows',
@@ -146,22 +118,21 @@ def main():
         '--disable-renderer-backgrounding',
     ])
     
-    # Create window first
+    api = API()
+    
     window = webview.create_window(
         title='Seemyclick',
-        width=width, height=height,
+        width=width,
+        height=height,
         resizable=True,
         background_color='#FFFFFF',
-        html=SHELL
+        html=SHELL,
+        js_api=api
     )
     
-    # Create API with window reference and set it as js_api
-    api = API(window)
-    window.js_api = api
-    
-    webview.start(func=boot, args=(window,),gui='edgechromium', http_server=True, private_mode=False, debug=debug)
+    webview.start(func=boot, args=(window,), gui='edgechromium', http_server=True, private_mode=False, debug=debug)
 
-    print("Webview started")
+    print("Webview closed")
 
 if __name__ == '__main__':
     main()

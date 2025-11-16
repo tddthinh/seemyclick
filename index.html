@@ -108,17 +108,17 @@
     <!-- Custom JS -->
     <script src="assets/js/custom/constant.js"></script>
     <script src="assets/js/custom/common-pqgrid.js"></script>
+
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
     <script>
         window.addEventListener('pywebviewready', function () {
-            setTimeout(() => initGridVars(), 50);
-            setTimeout(() => initGridActions(), 50);
+            initGridVars();
+            initGridActions();
         });
         var loopCount = 0;
         var gridActions;
         var gridVars;
         var gridData = [];
-
-
 
         async function initGridActions() {
 
@@ -736,8 +736,11 @@
                         {
                             type: 'button',
                             label: 'Screenshot',
-                            listener: function () {
-                                console.log('Screenshot button clicked');
+                            listener: async function (evt) {
+                                $button = $(evt.target);
+                                $button.button("disable");
+                                let result = await pywebview.api.capture_screenshot();
+                                $button.button("enable");
                             }
                         }
                     ]
@@ -885,43 +888,7 @@
         }
 
         $(document).ready(function () {
-            $('#btnAdd').on('click', async function () {
-                gridActions.addRow({state: false, type: '', name: '', value: '', step: '', default_value: ''});
-            });
 
-            // Delete row button
-            $('#btnDelete').on('click', async function () {
-                try {
-                    const selection = $gridActions.pqGrid("selection", { type: 'row', method: 'getSelection' });
-
-                    if (!selection || selection.length === 0) {
-                        showNotification('Please select a row to delete', 'error');
-                        return;
-                    }
-
-                    const rowIndx = selection[0].rowIndx;
-                    const rowData = $gridActions.pqGrid("getRowData", { rowIndx: rowIndx });
-
-                    if (confirm(`Delete row: ${rowData.company}?`)) {
-                        const result = await pywebview.api.delete_row_by_id(rowData.id);
-
-                        if (result.success) {
-                            await loadDataFromPython();
-                            showNotification('Row deleted successfully', 'success');
-                        } else {
-                            showNotification('Error: ' + result.message, 'error');
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error deleting row:', error);
-                    showNotification('Error deleting row', 'error');
-                }
-            });
-
-            // Refresh button
-            $('#btnRefresh').on('click', async function () {
-                await loadDataFromPython();
-            });
         });
         function showNotification(message, type = 'success') {
         }
