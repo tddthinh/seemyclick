@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="assets/grid-3.5.1/pqgrid.ui.min.css" />
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/custom/comm-pq-grid.css" />
+    <link rel="stylesheet" href="assets/css/custom/toast.css" />
     <style>
         html {
             height: 100%;
@@ -108,8 +109,7 @@
     <!-- Custom JS -->
     <script src="assets/js/custom/constant.js"></script>
     <script src="assets/js/custom/common-pqgrid.js"></script>
-
-    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <script src="assets/js/custom/toast.js"></script>
     <script>
         window.addEventListener('pywebviewready', function () {
             initGridVars();
@@ -408,10 +408,10 @@
                     minWidth: 50,
                     resizable: false,
                     editable: isEditable,
-                    type: 'checkbox',
                     align: "center",
                     sortable: false,
                     editor: false,
+                    type: 'checkbox',
                     dataType: 'bool',
                     cb: { all: false, header: true, check: true, uncheck: false },
                     properties: { default_value: false, prevent_copy_value: true },
@@ -658,21 +658,14 @@
                     valign: "center",
                     resizable: true,
                 },
-                freezeCols: 1,
                 postRenderInterval: 200,
                 filterModel: { on: true, mode: "AND", header: true },
                 numberCell: { show: true },
                 title: "Actions",
                 scrollModel: { 
-                    autoFit: false,
-                    pace: 'fast',
+                    autoFit: false
                 },
-                virtualX: true, // Enable virtual scrolling for columns
-                virtualY: true, // Enable virtual scrolling for rows
-                virtualXHeader: true,
                 resizable: true,
-                track: true, // Disable change tracking for better performance
-                stripeRows: false, // Reduces rendering overhead
                 swipeModel: { on: false },
                 wrap: false,
                 hwrap: false,
@@ -741,6 +734,9 @@
                                 $button.button("disable");
                                 let result = await pywebview.api.capture_screenshot();
                                 $button.button("enable");
+                                if(!result.success) return;
+                                let path = result.path;
+                                toast.success('Screenshot', 'Saved to ' + path, 5000);
                             }
                         }
                     ]

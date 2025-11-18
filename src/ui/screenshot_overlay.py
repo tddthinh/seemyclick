@@ -1,6 +1,5 @@
 """
 Visual overlay for screenshot selection using Tkinter
-This is a separate implementation that can be used when Tkinter is available
 """
 import tkinter as tk
 from PIL import ImageGrab, Image, ImageTk
