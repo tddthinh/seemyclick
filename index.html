@@ -675,9 +675,7 @@
                 historyModel: { on: true },
                 toolbar: {
                     items: [
-                        {
-                            type: 'button',
-                            label: 'Add',
+                        {   label: 'Add', type: 'button',
                             listener: function () {
                                 let colModel = gridActions.option("colModel");
                                 let newRow = {};
@@ -687,9 +685,7 @@
                                 gridActions.addRow({newRow: newRow, refresh: false, checkEditable: false});
                             }
                         },
-                        {
-                            type: 'button',
-                            label: 'Delete',
+                        {   label: 'Delete', type: 'button',
                             listener: function () {
                                 let selectedRows = gridActions.getData().flatMap((e,i)=>({state: e.state, rowIndx: i})).filter(e=>e.state);
                                 if(selectedRows.length > 0){
@@ -699,9 +695,7 @@
                                 }
                             }
                         },
-                        {
-                            type: 'button',
-                            label: 'Copy',
+                        {   label: 'Copy', type: 'button',
                             listener: function () {
                                 let colModel = gridActions.option("colModel");
                                 let selectedRows = gridActions.getData().filter(e=>e.state);
@@ -726,17 +720,34 @@
                                 }
                             }
                         },
-                        {
-                            type: 'button',
-                            label: 'Screenshot',
+                        {   label: 'Screenshot', type: 'button',
                             listener: async function (evt) {
                                 $button = $(evt.target);
                                 $button.button("disable");
                                 let result = await pywebview.api.capture_screenshot();
                                 $button.button("enable");
-                                if(!result.success) return;
-                                let path = result.path;
-                                toast.success('Screenshot', 'Saved to ' + path, 5000);
+                                if(!result.success){
+                                    toast.info('Screenshot', 'No image saved', 2500);
+                                    return;
+                                }
+                                let path = result.data.path;
+                                toast.show({
+                                    type: 'success',
+                                    title: 'Screenshot',
+                                    message: 'Saved to ' + path,
+                                    duration: 500000,
+                                    buttons: [
+                                        {
+                                            text: 'Open Folder',
+                                            noDefaultClass: true,
+                                            class: 'btn btn-secondary',
+                                            attribute: "data-mdb-ripple-init",
+                                            onClick: function () {
+                                                pywebview.api.open_folder(path);
+                                            }
+                                        },
+                                    ]
+                                });
                             }
                         }
                     ]

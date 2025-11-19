@@ -62,6 +62,37 @@
     cursor: text;
 }
 
+.c-toast-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.c-toast-btn {
+    padding: 6px 16px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+    white-space: nowrap;
+}
+
+.c-toast-btn:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.c-toast-btn:active {
+    background: #f3f4f6;
+    transform: scale(0.98);
+}
+
 .c-toast-close {
     width: 24px;
     height: 24px;

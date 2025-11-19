@@ -46,7 +46,22 @@ class API:
         return self.data
     
     def capture_screenshot(self):
-        pass
+        """Capture screenshot using overlay"""
+        from src.ui.screenshot_overlay import ScreenshotDialog
+        from PyQt5.QtWidgets import QApplication
+        import sys
+        try:
+            app = QApplication.instance()
+            if app is None:
+                app = QApplication(sys.argv)
+            dialog = ScreenshotDialog()
+            dialog.capture()
+            if dialog.exec_():
+                if dialog.result_path:
+                    return {'success': True, 'data': {'path': dialog.result_path}}
+            return {'success': False, 'data': None}
+        except Exception as e:
+            return {'success': False, 'data': None}
 
 
 APP_ROOT = Path(__file__).parent

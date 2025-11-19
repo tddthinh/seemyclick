@@ -18,18 +18,26 @@ class Toast {
             title = '',
             message = '',
             duration = 4000,
-            closable = true
+            closable = true,
+            buttons = []
         } = options;
 
         const toast = $(`<div class="c-toast ${type}"></div>`);
 
         const icon = this.getIcon(type);
         
+        const buttonsHtml = buttons.length > 0 ? `
+            <div class="c-toast-buttons">
+                ${buttons.map((btn, index) => this.createButtonHtml(btn, index)).join('')}
+            </div>
+        ` : '';
+        
         const html = `
             <div class="c-toast-icon">${icon}</div>
             <div class="c-toast-content">
                 ${title ? `<div class="c-toast-title">${this.escapeHtml(title)}</div>` : ''}
                 ${message ? `<div class="c-toast-message">${this.escapeHtml(message)}</div>` : ''}
+                ${buttonsHtml}
             </div>
             ${closable ? '<button class="c-toast-close" aria-label="Close">&times;</button>' : ''}
             ${duration > 0 ? '<div class="c-toast-progress"></div>' : ''}
@@ -38,6 +46,18 @@ class Toast {
         toast.html(html);
         this.container.append(toast);
         this.toasts.push(toast);
+
+        // Register button click handlers
+        if (buttons.length > 0) {
+            buttons.forEach((btn, index) => {
+                if (btn.onClick && typeof btn.onClick === 'function') {
+                    toast.find(`[data-toast-btn="${index}"]`).on('click', (e) => {
+                        e.preventDefault();
+                        btn.onClick(toast, e);
+                    });
+                }
+            });
+        }
 
         if (closable) {
             toast.find('.c-toast-close').on('click', () => this.hide(toast));
@@ -61,6 +81,37 @@ class Toast {
         }
 
         return toast;
+    }
+
+    createButtonHtml(button, index) {
+        const {
+            text = 'Button',
+            style = '',
+            class: customClass = '',
+            noDefaultClass = false,
+            attribute = ''
+        } = button;
+
+        let finalClass = '';
+        
+        if (noDefaultClass) {
+            // Only use custom classes
+            finalClass = customClass;
+        } else {
+            // Use default classes + custom classes
+            finalClass = customClass ? `c-toast-btn ${customClass}` : 'c-toast-btn';
+        }
+
+        return `
+            <button 
+                ${finalClass ? `class="${finalClass}"` : ''}
+                data-toast-btn="${index}"
+                ${style ? `style="${style}"` : ''}
+                ${attribute ? attribute : ''}
+            >
+                ${this.escapeHtml(text)}
+            </button>
+        `;
     }
 
     hide(toast) {
