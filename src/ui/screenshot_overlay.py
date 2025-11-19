@@ -1,30 +1,38 @@
 """
-Visual overlay for screenshot selection using Tkinter
+Visual overlay for screenshot selection using PyQt5
 """
-import tkinter as tk
-from PIL import ImageGrab, Image, ImageTk
+from PyQt5.QtWidgets import (QApplication, QDialog, QLabel, QLineEdit, 
+                              QPushButton, QVBoxLayout, QHBoxLayout, QFrame)
+from PyQt5.QtCore import Qt, QRect, QTimer, pyqtSignal, QObject
+from PyQt5.QtGui import QPixmap, QPainter, QPen, QColor, QFont, QImage
+from PIL import ImageGrab, Image
 from datetime import datetime
 import os
 
-
-class ModernInputDialog:
+class ModernInputDialog(QDialog):
     def __init__(self, parent, title, prompt, initial_value, x, y, preview_image=None):
+        super().__init__(parent)
         self.result = None
-        self.dialog = tk.Toplevel(parent)
-        self.dialog.title(title)
-        self.dialog.attributes('-topmost', True)
-        self.dialog.overrideredirect(True)
-        self.dialog.configure(bg='#2b2b2b')
+        self.setWindowTitle(title)
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WA_TranslucentBackground, False)
         
-        self.drag_start_x = 0
-        self.drag_start_y = 0
+        self.drag_start_pos = None
         
-        frame = tk.Frame(self.dialog, bg='#2b2b2b', padx=20, pady=15)
-        frame.pack(fill=tk.BOTH, expand=True)
+        # Main widget with dark background
+        main_widget = QFrame(self)
+        main_widget.setStyleSheet("""
+            QFrame {
+                background-color: #2b2b2b;
+                border: 1px solid #555555;
+            }
+        """)
         
-        frame.bind('<Button-1>', self.start_drag)
-        frame.bind('<B1-Motion>', self.on_drag)
+        layout = QVBoxLayout(main_widget)
+        layout.setContentsMargins(20, 15, 20, 15)
+        layout.setSpacing(12)
         
+        # Preview image if provided
         if preview_image:
             max_width = 400
             max_height = 300
@@ -35,188 +43,203 @@ class ModernInputDialog:
             new_height = int(img_height * scale)
             
             thumbnail = preview_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-            self.photo = ImageTk.PhotoImage(thumbnail)
             
-            img_label = tk.Label(frame, image=self.photo, bg='#2b2b2b', borderwidth=1, relief=tk.SOLID)
-            img_label.pack(pady=(0, 12))
-            img_label.bind('<Button-1>', self.start_drag)
-            img_label.bind('<B1-Motion>', self.on_drag)
+            # Convert PIL image to QPixmap
+            img_bytes = thumbnail.tobytes()
+            qimage = QImage(img_bytes, thumbnail.width, thumbnail.height, 
+                          thumbnail.width * 3, QImage.Format_RGB888)
+            pixmap = QPixmap.fromImage(qimage)
+            
+            img_label = QLabel()
+            img_label.setPixmap(pixmap)
+            img_label.setStyleSheet("border: 1px solid #555555;")
+            img_label.setAlignment(Qt.AlignCenter)
+            layout.addWidget(img_label)
         
-        label = tk.Label(frame, text=prompt, bg='#2b2b2b', fg='#ffffff', font=('Segoe UI', 10))
-        label.pack(anchor=tk.W, pady=(0, 8))
-        label.bind('<Button-1>', self.start_drag)
-        label.bind('<B1-Motion>', self.on_drag)
+        # Prompt label
+        label = QLabel(prompt)
+        label.setStyleSheet("""
+            QLabel {
+                color: #ffffff;
+                font-family: 'Segoe UI';
+                font-size: 10pt;
+                background: transparent;
+            }
+        """)
+        layout.addWidget(label)
         
-        self.entry = tk.Entry(frame, bg='#3c3c3c', fg='#ffffff', font=('Segoe UI', 10), 
-                              relief=tk.FLAT, insertbackground='#ffffff', width=35,
-                              highlightthickness=1, highlightbackground='#555555', highlightcolor='#0078d4')
-        self.entry.insert(0, initial_value)
-        self.entry.pack(fill=tk.X, pady=(0, 12))
-        self.entry.select_range(0, tk.END)
-        self.entry.focus_set()
+        # Input field
+        self.entry = QLineEdit(initial_value)
+        self.entry.setStyleSheet("""
+            QLineEdit {
+                background-color: #3c3c3c;
+                color: #ffffff;
+                font-family: 'Segoe UI';
+                font-size: 10pt;
+                border: 1px solid #555555;
+                padding: 6px;
+            }
+            QLineEdit:focus {
+                border: 1px solid #0078d4;
+            }
+        """)
+        self.entry.setMinimumWidth(350)
+        self.entry.selectAll()
+        self.entry.setFocus()
+        layout.addWidget(self.entry)
         
-        btn_frame = tk.Frame(frame, bg='#2b2b2b')
-        btn_frame.pack(fill=tk.X)
+        # Button layout
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
         
-        cancel_btn = tk.Button(btn_frame, text='Cancel', command=self.cancel,
-                               bg='#3c3c3c', fg='#ffffff', font=('Segoe UI', 9),
-                               relief=tk.FLAT, padx=20, pady=6, cursor='hand2',
-                               activebackground='#4c4c4c', activeforeground='#ffffff')
-        cancel_btn.pack(side=tk.RIGHT, padx=(5, 0))
+        # Save button
+        ok_btn = QPushButton('Save')
+        ok_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d4;
+                color: #ffffff;
+                font-family: 'Segoe UI';
+                font-size: 9pt;
+                font-weight: bold;
+                border: none;
+                padding: 6px 20px;
+                cursor: pointer;
+            }
+            QPushButton:hover {
+                background-color: #1084d8;
+            }
+        """)
+        ok_btn.setCursor(Qt.PointingHandCursor)
+        ok_btn.clicked.connect(self.ok)
+        btn_layout.addWidget(ok_btn)
         
-        ok_btn = tk.Button(btn_frame, text='Save', command=self.ok,
-                          bg='#0078d4', fg='#ffffff', font=('Segoe UI', 9, 'bold'),
-                          relief=tk.FLAT, padx=20, pady=6, cursor='hand2',
-                          activebackground='#1084d8', activeforeground='#ffffff')
-        ok_btn.pack(side=tk.RIGHT)
+        # Cancel button
+        cancel_btn = QPushButton('Cancel')
+        cancel_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #3c3c3c;
+                color: #ffffff;
+                font-family: 'Segoe UI';
+                font-size: 9pt;
+                border: none;
+                padding: 6px 20px;
+                cursor: pointer;
+            }
+            QPushButton:hover {
+                background-color: #4c4c4c;
+            }
+        """)
+        cancel_btn.setCursor(Qt.PointingHandCursor)
+        cancel_btn.clicked.connect(self.cancel)
+        btn_layout.addWidget(cancel_btn)
         
-        self.entry.bind('<Return>', lambda e: self.ok())
-        self.entry.bind('<Escape>', lambda e: self.cancel())
+        layout.addLayout(btn_layout)
         
-        self.dialog.update_idletasks()
-        width = self.dialog.winfo_width()
-        height = self.dialog.winfo_height()
-        screen_width = self.dialog.winfo_screenwidth()
-        screen_height = self.dialog.winfo_screenheight()
+        # Set the main layout
+        dialog_layout = QVBoxLayout(self)
+        dialog_layout.setContentsMargins(0, 0, 0, 0)
+        dialog_layout.addWidget(main_widget)
         
-        pos_x = min(x, screen_width - width - 10)
-        pos_y = min(y, screen_height - height - 10)
+        # Position the dialog
+        self.adjustSize()
+        screen = QApplication.desktop().screenGeometry()
+        
+        pos_x = min(x, screen.width() - self.width() - 10)
+        pos_y = min(y, screen.height() - self.height() - 10)
         pos_x = max(10, pos_x)
         pos_y = max(10, pos_y)
         
-        self.dialog.geometry(f'+{pos_x}+{pos_y}')
-        self.dialog.grab_set()
-        self.dialog.wait_window()
+        self.move(pos_x, pos_y)
+        
+        # Connect Enter/Escape keys
+        self.entry.returnPressed.connect(self.ok)
     
-    def start_drag(self, event):
-        self.drag_start_x = event.x
-        self.drag_start_y = event.y
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.drag_start_pos = event.globalPos() - self.frameGeometry().topLeft()
     
-    def on_drag(self, event):
-        x = self.dialog.winfo_x() + event.x - self.drag_start_x
-        y = self.dialog.winfo_y() + event.y - self.drag_start_y
-        self.dialog.geometry(f'+{x}+{y}')
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.LeftButton and self.drag_start_pos:
+            self.move(event.globalPos() - self.drag_start_pos)
+    
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self.cancel()
+        else:
+            super().keyPressEvent(event)
     
     def ok(self):
-        self.result = self.entry.get()
-        self.dialog.destroy()
+        self.result = self.entry.text()
+        self.accept()
     
     def cancel(self):
         self.result = None
-        self.dialog.destroy()
-
-
-class ScreenshotOverlay:
-    """Screenshot overlay with visual feedback using Tkinter"""
+        self.reject()
+class ScreenshotDialog(QDialog):
+    """Internal dialog class that does the actual screenshot UI"""
     
-    def __init__(self):
-        self.root = tk.Tk()
-        self.root.attributes('-fullscreen', True)
-        self.root.attributes('-topmost', True)
-        self.root.configure(cursor='cross', bg='black')
-        self.root.attributes('-alpha', 0.3)
+    def __init__(self, parent=None):
+        super().__init__(parent)
         
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.setWindowState(Qt.WindowFullScreen)
+        self.setCursor(Qt.CrossCursor)
+        
+        # Take screenshot before showing overlay
         self.screenshot = ImageGrab.grab()
         
-        self.canvas = tk.Canvas(
-            self.root,
-            highlightthickness=0,
-            cursor='cross',
-            bg='black'
-        )
-        self.canvas.pack(fill=tk.BOTH, expand=True)
-        
-        self.start_x = None
-        self.start_y = None
-        self.rect_id = None
-        self.text_id = None
+        self.start_pos = None
+        self.current_pos = None
         self.result_path = None
         
-        self.canvas.bind('<Button-1>', self.on_mouse_down)
-        self.canvas.bind('<B1-Motion>', self.on_mouse_move)
-        self.canvas.bind('<ButtonRelease-1>', self.on_mouse_up)
-        self.canvas.bind('<Button-3>', self.on_right_click)
-        self.root.bind('<Escape>', self.on_escape)
+
     
-    def close(self):
-        """Close the overlay window"""
-        try:
-            if self.root and self.root.winfo_exists():
-                self.result_path = None
-                self.root.quit()
-                self.root.destroy()
-        except:
-            pass
-        finally:
-            self.root = None
-        
-    def on_mouse_down(self, event):
+    def capture(self):
+        self.show()
+        self.raise_()
+        self.activateWindow()
+
+    def mousePressEvent(self, event):
         """Start selection"""
-        self.start_x = event.x
-        self.start_y = event.y
-        
-        if self.rect_id:
-            self.canvas.delete(self.rect_id)
-        if self.text_id:
-            self.canvas.delete(self.text_id)
-            
-    def on_mouse_move(self, event):
-        """Update selection rectangle"""
-        if self.start_x is not None:
-            if self.rect_id:
-                self.canvas.delete(self.rect_id)
-            if self.text_id:
-                self.canvas.delete(self.text_id)
-            
-            self.rect_id = self.canvas.create_rectangle(
-                self.start_x, self.start_y,
-                event.x, event.y,
-                outline='red',
-                fill='#FFFFFF',
-                width=1
-            )
-            
-            # Draw info text
-            width = abs(event.x - self.start_x)
-            height = abs(event.y - self.start_y)
-            x = min(self.start_x, event.x)
-            y = min(self.start_y, event.y)
-            
-            info_text = f"{width} x {height} px"
-            text_y = y - 20 if y > 30 else y + height + 20
-            
-            self.text_id = self.canvas.create_text(
-                x + 5, text_y,
-                text=info_text,
-                fill='#FFFFFF',
-                anchor=tk.NW,
-                font=('Arial', 12, 'bold')
-            )
+        if event.button() == Qt.LeftButton:
+            self.start_pos = event.pos()
+            self.current_pos = event.pos()
+            self.update()
+        elif event.button() == Qt.RightButton:
+            self.on_right_click()
     
-    def on_mouse_up(self, event):
+    def mouseMoveEvent(self, event):
+        """Update selection rectangle"""
+        if self.start_pos:
+            self.current_pos = event.pos()
+            self.update()
+    
+    def mouseReleaseEvent(self, event):
         """Complete selection and save"""
-        if self.start_x is not None:
-            x1 = min(self.start_x, event.x)
-            y1 = min(self.start_y, event.y)
-            x2 = max(self.start_x, event.x)
-            y2 = max(self.start_y, event.y)
+        if event.button() == Qt.LeftButton and self.start_pos:
+            x1 = min(self.start_pos.x(), event.pos().x())
+            y1 = min(self.start_pos.y(), event.pos().y())
+            x2 = max(self.start_pos.x(), event.pos().x())
+            y2 = max(self.start_pos.y(), event.pos().y())
             
             if abs(x2 - x1) > 5 and abs(y2 - y1) > 5:
                 cropped = self.screenshot.crop((x1, y1, x2, y2))
                 
-                self.root.withdraw()
+                self.hide()
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                 
                 dialog = ModernInputDialog(
-                    self.root,
+                    None,
                     "Save Screenshot",
                     "Enter filename:",
                     f'screenshot_{timestamp}',
-                    event.x_root,
-                    event.y_root,
+                    event.globalPos().x(),
+                    event.globalPos().y(),
                     preview_image=cropped
                 )
                 
+                dialog.exec_()
                 filename = dialog.result
                 
                 if filename:
@@ -228,38 +251,61 @@ class ScreenshotOverlay:
                     cropped.save(filepath)
                     self.result_path = filepath
             
-            self.root.quit()
-            self.root.destroy()
+            self.accept()
     
-    def on_right_click(self, event):
+    def on_right_click(self):
         """Reset selection or cancel if no selection"""
-        if self.start_x is None and self.rect_id is None:
+        if self.start_pos is None:
             self.result_path = None
-            self.root.after(50, lambda: (self.root.quit(), self.root.destroy()))
+            self.reject()
         else:
-            self.start_x = None
-            self.start_y = None
+            self.start_pos = None
+            self.current_pos = None
+            self.update()
+    
+    def keyPressEvent(self, event):
+        """Cancel on Escape"""
+        if event.key() == Qt.Key_Escape:
+            self.result_path = None
+            self.reject()
+    
+    def paintEvent(self, event):
+        """Draw selection rectangle and info text with transparent overlay"""
+        painter = QPainter(self)
+        
+        # Draw semi-transparent dark overlay over entire screen
+        painter.fillRect(self.rect(), QColor(0, 0, 0, 100))
+        
+        if self.start_pos and self.current_pos:
+            # Draw selection rectangle
+            rect = QRect(self.start_pos, self.current_pos).normalized()
             
-            if self.rect_id:
-                self.canvas.delete(self.rect_id)
-                self.rect_id = None
-            if self.text_id:
-                self.canvas.delete(self.text_id)
-                self.text_id = None
-        return "break"
-    
-    def on_escape(self, event):
-        """Cancel"""
-        self.result_path = None
-        self.root.quit()
-        self.root.destroy()
-    
-    def capture(self):
-        """Start capture"""
-        try:
-            self.root.mainloop()
-            return self.result_path
-        except Exception as e:
-            print(f"Visual overlay error: {e}")
-            return None
+            # Clear the selection area (make it transparent to show original screen)
+            painter.setCompositionMode(QPainter.CompositionMode_Clear)
+            painter.fillRect(rect, Qt.transparent)
+            painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+            
+            # Draw red outline around selection
+            pen = QPen(QColor(255, 0, 0), 2)
+            painter.setPen(pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawRect(rect)
+            
+            # Draw info text
+            width = abs(self.current_pos.x() - self.start_pos.x())
+            height = abs(self.current_pos.y() - self.start_pos.y())
+            
+            info_text = f"{width} x {height} px"
+            text_y = rect.top() - 25 if rect.top() > 35 else rect.bottom() + 25
+            
+            # Draw text background
+            font = QFont('Arial', 12, QFont.Bold)
+            painter.setFont(font)
+            text_rect = painter.boundingRect(rect.left() + 5, text_y - 15, 200, 20, 
+                                            Qt.AlignLeft, info_text)
+            painter.fillRect(text_rect.adjusted(-5, -3, 5, 3), QColor(0, 0, 0, 180))
+            
+            # Draw text with white color
+            painter.setPen(QColor(255, 255, 255))
+            painter.drawText(rect.left() + 5, text_y, info_text)
 
