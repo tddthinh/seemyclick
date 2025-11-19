@@ -1,0 +1,20 @@
+{
+  "loop": false,
+  "init_functions": [
+  ],
+  "actions": [
+    {"type": "call_function","step_number": 1,"disabled": true,"name": "Start application","function": "my_inputs.generatePhoneNumber","args_text": "{}","pre_delay": 0.0,"post_delay": 0.0,"can_fail": true,"try_times": 1},
+    {"type": "activate_window","step_number": 2,"disabled": true,"name": "Focus main window","window_title": "Application","pre_delay": 0.0,"post_delay": 0.0,"can_fail": true,"try_times": 1},
+    {"type": "wait","step_number": 3,"disabled": true,"name": "Wait for login button","condition": "not exist_win","image": "images/login-button.jpg","save_as": "exist_win","pre_delay": 2.0,"post_delay": 0.0,"can_fail": true,"try_times": 1,"timeout": 0.0,"check_interval": 0.0,"confidence": 0.8},
+    {"type": "click","step_number": 4,"disabled": true,"name": "Click login button","image": "images/login-button.jpg","pre_delay": 1.0,"post_delay": 0.0,"can_fail": true,"try_times": 1,"confidence": 0.8,"offset": "0,0"},
+    {"type": "input","step_number": 5,"disabled": true,"name": "Enter username","args_text": "{{username}}","pre_delay": 0.0,"post_delay": 0.0,"can_fail": true,"try_times": 1},
+    {"type": "input","step_number": 6,"disabled": true,"name": "Enter password","args_text": "{{password}}","pre_delay": 0.0,"post_delay": 0.0,"can_fail": true,"try_times": 1},
+    {"type": "save_file","step_number": 7,"disabled": true,"name": "Save account info","args_text": "accounts/{{username}}.txt","pre_delay": 0.0,"post_delay": 0.0,"can_fail": true,"try_times": 1,"mode": "w","content": "Username: {{username}}\nPassword: {{password}}\nPhone: {{phone}}"},
+    {"type": "call_function","step_number": 8,"disabled": true,"function": "my_inputs.generatePhoneNumber","args_text": "{}","save_as": "phone","pre_delay": 0.0,"post_delay": 0.0,"can_fail": true,"try_times": 1},
+    {"type": "call_function","step_number": 9,"disabled": true,"function": "my_inputs.generateUsername","args_text": "{\"phone\": \"\"}","save_as": "username","pre_delay": 0.0,"post_delay": 0.0,"can_fail": true,"try_times": 1},
+    {"type": "call_function","step_number": 10,"disabled": false,"function": "my_inputs.print_text","args_text": "{\"text1\": \"\", \"text2\": \"\", \"text3\": \"\"}","save_as": "password","pre_delay": 0.0,"post_delay": 0.0,"can_fail": true,"try_times": 1},
+    {"type": "call_function","step_number": 11,"disabled": false,"function": "my_inputs.write_text","args_text": "{\"filename\": \"my_test.txt\", \"text\": \"a\\\\nb\"}","save_as": "password","pre_delay": 0.0,"post_delay": 0.0,"can_fail": true,"try_times": 1}
+  ],
+  "refresh_log": true,
+  "variable_defaults": {}
+}
