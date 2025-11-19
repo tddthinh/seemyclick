@@ -21,18 +21,15 @@
         html {
             height: 100%;
         }
-
         body {
             height: 100%;
         }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-size: 14px;
         }
-
         .footer {
             height: 20px;
             background-color: #f0f0f0;
@@ -42,12 +39,15 @@
             font-size: 12px;
             color: #666;
         }
-
+        .loading-container.show{
+            display: block;
+        }
         .loading-container {
             display: none;
             position: fixed;
             z-index: 9999;
             background: white;
+            opacity: 0.7;
         }
         .spinner {
             width: 32px;
@@ -55,9 +55,10 @@
             border: 3px solid #ddd;
             border-top-color: #555;
             border-radius: 50%;
-            animation: spin 1s linear infinite
+            animation: spin 1s linear infinite;
+            margin: auto;
+            margin-top: 45%;
         }
-
         @keyframes spin {
             to {
                 transform: rotate(360deg)
