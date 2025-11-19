@@ -3,7 +3,6 @@ import os
 import sys
 from pathlib import Path
 
-
 # Set WebView2 user data folder to avoid permission issues
 webview_data_dir = os.path.join(os.getenv('TEMP'), 'webview_data')
 os.makedirs(webview_data_dir, exist_ok=True)
@@ -41,7 +40,14 @@ class API:
             {"type": "click","step_number": 7,"disabled": False,"image": "images\\screenshot_20250913_230333.png","pre_delay": 0.0,"post_delay": 0.0,"can_fail": True,"try_times": 1,"confidence": 0.8,"offset": "0,0"},
             {"type": "click","step_number": 8,"disabled": False,"image": "images\\screenshot_20250913_230333.png","pre_delay": 0.0,"post_delay": 0.0,"can_fail": True,"try_times": 1,"confidence": 0.8,"offset": "0,0"},
         ]
-        
+    
+    def response(self, success: bool, message: str = '', data: any = {}):
+        return {
+            'success': success,
+            'message': message,
+            'data': data
+        }
+
     def get_data(self):
         return self.data
     
@@ -58,11 +64,40 @@ class API:
             dialog.capture()
             if dialog.exec_():
                 if dialog.result_path:
-                    return {'success': True, 'data': {'path': dialog.result_path}}
-            return {'success': False, 'data': None}
+                    return self.response(success=True, message='Image saved', data={'path': dialog.result_path})
+            return self.response(success=False, message='No image saved')
         except Exception as e:
-            return {'success': False, 'data': None}
+            return self.response(success=False, message='Failed to capture screenshot: ' + str(e))
 
+    def open_folder(self, path):
+        """
+        Open the requested file or the nearest existing parent folder.
+        Falls back gracefully if the target does not exist yet (e.g. pending screenshot).
+        """
+        target = Path(path)
+        if not target.is_absolute():
+            target = (APP_ROOT / target).resolve()
+
+        # Always open a directory – if a file was requested, use its parent folder instead.
+        candidate = target if target.is_dir() else target.parent
+
+        # Walk up the tree until we find an existing folder.
+        while candidate and not candidate.exists():
+            parent = candidate.parent
+            if parent == candidate:
+                candidate = None
+                break
+            candidate = parent
+
+        if not candidate:
+            return self.response(success=False, message='Could not find an existing path for: ' + path)
+
+        try:
+            os.startfile(str(candidate))
+            return self.response(success=True, message=None)
+        except OSError as exc:
+            print(f"[open_folder] Failed to open '{candidate}': {exc}")
+            return self.response(success=False, message='Failed to open: ' + str(candidate))
 
 APP_ROOT = Path(__file__).parent
 ENTRY = APP_ROOT / 'index.html'

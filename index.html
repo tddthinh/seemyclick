@@ -735,15 +735,19 @@
                                     type: 'success',
                                     title: 'Screenshot',
                                     message: 'Saved to ' + path,
-                                    duration: 500000,
+                                    duration: 5000,
                                     buttons: [
                                         {
                                             text: 'Open Folder',
                                             noDefaultClass: true,
                                             class: 'btn btn-secondary',
                                             attribute: "data-mdb-ripple-init",
-                                            onClick: function () {
-                                                pywebview.api.open_folder(path);
+                                            onClick: async function () {
+                                                let result = await pywebview.api.open_folder(path);
+                                                if(!result.success){
+                                                    toast.error('Open Folder', result.message, 2500);
+                                                    return;
+                                                }
                                             }
                                         },
                                     ]
