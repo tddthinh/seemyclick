@@ -64,9 +64,10 @@ const commonPQGrid = {
                 column.filter = this.filterWidget(options, filterOptions);
             });
         },
-        refresh(grid) {
+        refresh(grid, dataIndxList = []) {
             let columnModel = grid.options.colModel;
             columnModel.forEach(column => {
+                if(dataIndxList.length > 0 && !dataIndxList.includes(column.dataIndx)) return;
                 if(column.editor?.type === 'select'){
                     this.selectFilter(grid, column.dataIndx);
                 }
@@ -99,10 +100,55 @@ const commonPQGrid = {
             }
         }
     },
+    event: {
+        addExpandEvent: function(grid){
+            let options = grid.options;
+            let expand = options.collapsible.expand;
+            if(!expand) return;
+            grid.on("expandDone",function(){
+                setTimeout(() => {
+                    expand.apply(this,arguments);
+                }, 10);
+            });
+        },
+        addCollapseEvent: function(grid){
+            let options = grid.options;
+            let collapse = options.collapsible.collapse;
+            if(!collapse) return;
+
+            grid.on("collapseDone",function(){
+                setTimeout(() => {
+                    collapse.apply(this,arguments);
+                }, 10);
+            });
+        },
+        apply: function(grid){
+            this.addExpandEvent(grid);
+            this.addCollapseEvent(grid);
+        }
+    },
+    toolbar: {
+        apply: function(options){
+            const BUTTONS = {
+                add:        `<button type="button" class="btn btn-primary btn-floating" data-mdb-ripple-init data-mdb-tooltip-init title="Add a new row"><i class="fas fa-circle-plus"></i></button>`,
+                delete:     `<button type="button" class="btn btn-primary btn-floating" data-mdb-ripple-init data-mdb-tooltip-init title="Delete selected rows"><i class="fas fa-trash-can"></i></button>`,
+                copy:       `<button type="button" class="btn btn-primary btn-floating" data-mdb-ripple-init data-mdb-tooltip-init title="Copy selected rows"><i class="far fa-clone"></i></button>`,
+                screenshot: `<button type="button" class="btn btn-primary btn-floating" data-mdb-ripple-init data-mdb-tooltip-init title="Screenshot and add as a new row"><i class="fas fa-camera"></i></button>`
+            };
+
+            (options?.toolbar?.items || []).forEach(item => {
+                if(!item?.button) return;
+                item.type = BUTTONS[item.button] || item.type;
+                item.listener = { 'click': item.listener || function(){} };
+            });
+        }
+    },
     init(gridId, options) {
         commonPQGrid.render.apply(options);
         commonPQGrid.filter.apply(options);
+        commonPQGrid.toolbar.apply(options);
         let grid = pq.grid(gridId, options);
+        commonPQGrid.event.apply(grid);
 
         if(!grid.iRefresh._o_refresh){
             grid.iRefresh._o_refresh = grid.iRefresh.refresh;
@@ -115,4 +161,8 @@ const commonPQGrid = {
         grid.refresh();
         return grid;
     }
+}
+
+if (typeof window !== 'undefined') {
+    window.commonPQGrid = commonPQGrid;
 }

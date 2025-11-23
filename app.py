@@ -1,3 +1,4 @@
+import json
 import webview
 import os
 import sys
@@ -99,6 +100,37 @@ class API:
             print(f"[open_folder] Failed to open '{candidate}': {exc}")
             return self.response(success=False, message='Failed to open: ' + str(candidate))
 
+    def load_file(self):
+        from PyQt5.QtWidgets import QFileDialog, QApplication
+
+        try:
+            app = QApplication.instance()
+            if app is None:
+                app = QApplication(sys.argv)
+
+            initial_dir = (APP_ROOT / 'json_example').resolve()
+            if not initial_dir.exists():
+                initial_dir = APP_ROOT
+
+            options = QFileDialog.Options()
+            file_path, _ = QFileDialog.getOpenFileName(
+                None,
+                'Select JSON file',
+                str(initial_dir),
+                'JSON Files (*.json);;All Files (*)',
+                options=options
+            )
+
+            if not file_path:
+                return self.response(success=False, message='No file selected')
+
+            with open(file_path, 'r', encoding='utf-8') as json_file:
+                loaded = json.load(json_file)
+
+            return self.response(success=True, message='File loaded', data={'path': file_path, 'content': loaded})
+        except Exception as exc:
+            return self.response(success=False, message=f'Failed to load file: {exc}')
+    
 APP_ROOT = Path(__file__).parent
 ENTRY = APP_ROOT / 'index.html'
 

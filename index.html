@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
-    <title>SeeMyMacro</title>
+    <title></title>
     <!-- Vendor CSS -->
     <link rel="stylesheet" href="assets/css/all.min.css" />
     <link rel="stylesheet" href="assets/css/roboto-font.css" />
@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="assets/grid-3.5.1/pqgrid.min.css" />
     <link rel="stylesheet" href="assets/grid-3.5.1/pqgrid.ui.min.css" />
     <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/custom/comm-ui.css" />
     <link rel="stylesheet" href="assets/css/custom/comm-pq-grid.css" />
     <link rel="stylesheet" href="assets/css/custom/toast.css" />
     <style>
@@ -31,72 +32,62 @@
             font-size: 14px;
         }
         .footer {
-            height: 20px;
             background-color: #f0f0f0;
             border-top: 1px solid #e0e0e0;
-            padding: 5px;
             text-align: center;
             font-size: 12px;
             color: #666;
         }
-        .loading-container.show{
-            display: block;
-        }
-        .loading-container {
-            display: none;
-            position: fixed;
-            z-index: 9999;
-            background: white;
-            opacity: 0.7;
-        }
-        .spinner {
-            width: 32px;
-            height: 32px;
-            border: 3px solid #ddd;
-            border-top-color: #555;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: auto;
-            margin-top: 45%;
-        }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg)
-            }
-        }
     </style>
 </head>
 <body>
-    <div class="loading-container h-100 w-100">
-        <div class="spinner"></div>
-    </div>
-    <div class="fluid-container p-3 h-100 d-flex flex-column">
+    <div class="fluid-container px-3 pt-1 pb-3 h-100 d-flex flex-column">
         <div class="header"></div>
-        <div class="grid-container flex-fill d-flex flex-column">
-            <div class="toolbar">
-                <div class="mt-1 d-flex align-items-start">
-                    <button id="btnStart" type="button" class="btn btn-primary me-1" data-mdb-ripple-init>Start</button>
-                    <button id="btnLoad" type="button" class="btn btn-primary me-1" data-mdb-ripple-init>Load</button>
-                    <button id="btnSave" type="button" class="btn btn-primary me-1" data-mdb-ripple-init>Save</button>
-                    <button id="btnSaveTo" type="button" class="btn btn-primary me-1" data-mdb-ripple-init>Save To</button>
-                </div>
-                <div class="d-flex mt-3">
-                    <div class="form-check me-3">
-                        <input id="chkLoopActions" class="form-check-input" type="checkbox" value=""/>
-                        <label class="form-check-label" for="chkLoopActions">Loop Actions</label>
+        <ul class="nav nav-tabs mb-3" id="tab-menu" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a data-mdb-tab-init id="tab-action-menu" href="#tab-action-content" role="tab" aria-controls="tab-action-content" aria-selected="true" class="nav-link active">
+                    <i class="fas fa-robot"></i>
+                    Action
+                </a>
+              </li>
+              <li class="nav-item" role="presentation">
+                <a data-mdb-tab-init id="tab-log-menu"    href="#tab-log-content" role="tab" aria-controls="tab-log-content" aria-selected="false" class="nav-link">
+                    <i class="far fa-file-lines"></i>
+                    Log
+                </a>
+              </li>
+        </ul>
+        <div class="tab-content" id="tab-content">
+            <div class="tab-pane fade show active" id="tab-action-content" role="tabpanel" aria-labelledby="tab-action-menu">
+                <div class="grid-container flex-fill d-flex flex-column">
+                    <div class="toolbar">
+                        <div class="mt-1 d-flex align-items-start">
+                            <button id="btnStart" type="button" class="btn btn-success me-1" data-mdb-ripple-init data-mdb-tooltip-init title="Start actions"><i class="fas fa-circle-play"></i> Start</button>
+                            <button id="btnLoad" type="button" class="btn btn-primary me-1" data-mdb-ripple-init data-mdb-tooltip-init title="Load action file"><i class="fas fa-file-import"></i> Load</button>
+                            <button id="btnSave" type="button" class="btn btn-primary me-1" data-mdb-ripple-init data-mdb-tooltip-init title="Save action file"><i class="fas fa-sd-card"></i> Save</button>
+                            <button id="btnSaveTo" type="button" class="btn btn-primary me-1" data-mdb-ripple-init data-mdb-tooltip-init title="Save to another action file"><i class="fas fa-file-export"></i> Save To..</button>
+                        </div>
+                        <div class="d-flex mt-3">
+                            <div class="form-check me-3">
+                                <input id="chkLoopActions" class="form-check-input" type="checkbox" value=""/>
+                                <label class="form-check-label" for="chkLoopActions">Loop Actions</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="chkRefreshLog" class="form-check-input" type="checkbox" value=""/>
+                                <label class="form-check-label" for="chkRefreshLog">Refresh Log</label>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-check">
-                        <input id="chkRefreshLog" class="form-check-input" type="checkbox" value=""/>
-                        <label class="form-check-label" for="chkRefreshLog">Refresh Log</label>
+                    <div id="gridVars"></div>
+                    <div class="d-flex mt-3">
+                        <h6>Loop count: <span id="lblLoopCount" class="badge badge-primary">0</span></h6>
                     </div>
+                    <div class="flex-fill" id="gridActions"></div>
                 </div>
             </div>
-            <hr>
-            <div id="gridVars"></div>
-            <div class="d-flex mt-3">
-                <h6>Loop count: <span id="lblLoopCount" class="badge badge-primary">0</span></h6>
+            <div class="tab-pane fade" id="tab-log-content" role="tabpanel" aria-labelledby="tab-log-menu">
+                Tab 2 content
             </div>
-            <div class="flex-fill" id="gridActions"></div>
         </div>
         <div class="footer"></div>
     </div>
@@ -109,6 +100,7 @@
     <script src="assets/grid-3.5.1/pqgrid.min.js"></script>
     <!-- Custom JS -->
     <script src="assets/js/custom/constant.js"></script>
+    <script src="assets/js/custom/common-ui.js"></script>
     <script src="assets/js/custom/common-pqgrid.js"></script>
     <script src="assets/js/custom/toast.js"></script>
     <script>
@@ -120,6 +112,7 @@
                 user.initGridActions();
             });
             $(document).ready(function () {
+                commonUI.init();
                 user.bindEvents();
             });
         })({
@@ -127,8 +120,37 @@
                 $('#btnStart').on('click', function(evt) {
                     console.log('Start button clicked');
                 });
-                $('#btnLoad').on('click', function(evt) {
-                    console.log('Load button clicked');
+                $('#btnLoad').on('click', async function(evt) {
+                    commonUI.showLoading();
+                    let result = await pywebview.api.load_file();
+                    if(!result.success){
+                        toast.error('Load File', result.message, 2500);
+                        commonUI.hideLoading();
+                        return;
+                    }
+                    console.log('Load file', result);
+
+                    let content = result.data.content;
+
+                    let actions = content.actions || [];
+                    gridActions.option("dataModel.data", actions);
+                    gridActions.refreshDataAndView();
+
+                    let variables = content.variables || [];
+                    gridVars.option("dataModel.data", variables);
+                    gridVars.refreshDataAndView();
+                    commonUI.hideLoading();
+
+                    let loopActions = content.loop || false;
+                    $('#chkLoopActions').prop('checked', loopActions);
+
+                    let refreshLog = content.refresh_log || false;
+                    $('#chkRefreshLog').prop('checked', refreshLog);
+
+                    toast.show({
+                        type: 'success',
+                        title: 'Load File', message: `Loaded: ${actions.length} actions, ${variables.length} variables`, duration: 5000,
+                    });
                 });
                 $('#btnSave').on('click', function(evt) {
                     console.log('Save button clicked');
@@ -441,17 +463,15 @@
                         width: 60,
                         dataType: 'integer',
                         cls: CELL_CLASS.DISABLED,
-                        properties: { default_value: null, prevent_copy_value: true },
-                        editable: isEditable,},
+                        properties: { default_value: null, prevent_copy_value: true }},
 
                     {   dataIndx: "last_time", title: "Last Time",
                         align: "center",
                         editable: isEditable,
                         width: 130,
                         dataType: 'string',
-                        properties: { default_value: "", prevent_copy_value: true },
                         cls: CELL_CLASS.DISABLED,
-                        editable: isEditable,},
+                        properties: { default_value: null, prevent_copy_value: true }},
 
                     {   dataIndx: "disabled", title: "Disabled",
                         width: 80,
@@ -460,8 +480,8 @@
                         editor: false,
                         type: 'checkbox',
                         dataType: 'bool',
-                        cb: { all: false, header: true, check: true, uncheck: false },
-                        properties: { default_value: false },},
+                        properties: { default_value: false },
+                        cb: { all: false, header: true, check: true, uncheck: false }},
 
                     {   dataIndx: "name", title: "Name",
                         width: 120,
@@ -471,6 +491,7 @@
                         render: renderCell},
 
                     {   dataIndx: "condition", title: "Condition",
+                        align: "left",
                         width: 150,
                         editable: isEditable,
                         dataType: 'string',
@@ -511,6 +532,7 @@
                         render: renderCell},
 
                     {   dataIndx: "args_text", title: "Arguments",
+                        align: "left",
                         width: 200,
                         editable: isEditable,
                         dataType: 'string',
@@ -639,10 +661,11 @@
                     wrap: false,
                     hwrap: false,
                     editModel: {clicksToEdit: 2},
-                    historyModel: { on: true },
+                    collapsible: { on : false },
+                    resizable: false,
                     toolbar: {
                         items: [
-                            {   label: 'Add', type: 'button',
+                            {   button: "add",
                                 listener: function () {
                                     let colModel = gridActions.option("colModel");
                                     let newRow = {};
@@ -652,7 +675,7 @@
                                     gridActions.addRow({newRow: newRow, refresh: false, checkEditable: false});
                                 }},
 
-                            {   label: 'Delete', type: 'button',
+                            {   button: "delete",
                                 listener: function () {
                                     let selectedRows = gridActions.getData().flatMap((e,i)=>({state: e.state, rowIndx: i})).filter(e=>e.state);
                                     if(selectedRows.length > 0){
@@ -662,7 +685,7 @@
                                     }
                                 }},
 
-                            {   label: 'Copy', type: 'button',
+                            {   button: "copy",
                                 listener: function () {
                                     let colModel = gridActions.option("colModel");
                                     let selectedRows = gridActions.getData().filter(e=>e.state);
@@ -686,7 +709,8 @@
                                         alert('No rows selected to copy');
                                     }
                                 }},
-                            {   label: 'Screenshot', type: 'button',
+
+                            {   button: "screenshot",
                                 listener: async function (evt) {
                                     $button = $(evt.target);
                                     $button.button("disable");
@@ -721,7 +745,6 @@
                                 }}
                         ]
                     },
-                    resizable: false,
                     cellSave: function (evt, ui) {
                         if (ui.dataIndx === 'type') {
                             gridActions.refreshView();
@@ -729,17 +752,12 @@
                     },
                     change: function (evt, ui) {
                         let grid = this;
-                        let obj = {};
-                        if(ui.source === 'add'){
-                            obj.header = false;
-                        }
                         let checkboxDataIndxList = grid.options.colModel.filter(e=>e.type === 'checkbox').flatMap(e=>e.dataIndx);
                         let changedDataIndxList = _.uniq(ui.rowList.flatMap(e=>_.keys(e.newRow)));
-                        if(changedDataIndxList.length == 1 && checkboxDataIndxList.includes(changedDataIndxList[0])){
-                            obj.header = false;
-                        }
+                        let isCheckboxChanged = changedDataIndxList.length == 1 && checkboxDataIndxList.includes(changedDataIndxList[0]);
+                        if(isCheckboxChanged) return;
+                        commonPQGrid.filter.refresh(grid, changedDataIndxList);
 
-                        grid.refreshDataAndView(obj);
                     }
                 };
 
@@ -757,15 +775,23 @@
                         editor: false,
                         dataType: 'bool',
                         cb: { all: false, header: true, check: true, uncheck: false }},
+
                     {   dataIndx: "name", title: "Variable Name",
                         width: 120,
                         properties: { default_value: "" }},
+
                     {   dataIndx: "value", title: "Current Value",
                         width: 150,
-                        properties: { default_value: "" }},
+                        editable: false,
+                        cls: CELL_CLASS.DISABLED,
+                        properties: { default_value: "", prevent_copy_value: true }},
+
                     {   dataIndx: "step", title: "Changed By Step",
                         width: 120,
-                        properties: { default_value: "" }},
+                        editable: false,
+                        cls: CELL_CLASS.DISABLED,
+                        properties: { default_value: "", prevent_copy_value: true }},
+
                     {   dataIndx: "default_value", title: "Default Value",
                         width: 120,
                         properties: { default_value: "" }},
@@ -789,19 +815,62 @@
                     wrap: false,
                     hwrap: false,
                     editModel: {clicksToEdit: 2},
+                    collapsible: {
+                        on : true,
+                        expand: function(evt, ui){
+                            if(gridActions){
+                                gridActions.refresh();
+                            }
+                        },
+                        collapse: function(evt, ui){
+                            if(gridActions){
+                                gridActions.refresh();
+                            }
+                        }
+                    },
                     toolbar: {
                         items: [
-                            {   type: 'button', label: 'Add',
+                            {   button: 'add',
                                 listener: function () {
-                                    console.log('Add button clicked');
+                                    let colModel = gridVars.option("colModel");
+                                    let newRow = {};
+                                    colModel.forEach(col => {
+                                        newRow[col.dataIndx] = col.properties?.default_value;
+                                    });
+                                    gridVars.addRow({newRow: newRow, refresh: true, checkEditable: false});
                                 }},
-                            {   type: 'button', label: 'Delete',
+                            {   button: 'delete',
                                 listener: function () {
-                                    console.log('Delete button clicked');
+                                    let selectedRows = gridVars.getData().flatMap((e,i)=>({state: e.state, rowIndx: i})).filter(e=>e.state);
+                                    if(selectedRows.length > 0){
+                                        gridVars.deleteRow({rowList: selectedRows});
+                                    } else {
+                                        alert('No rows selected to delete');
+                                    }
                                 }},
-                            {   type: 'button', label: 'Copy',
+                            {   button: 'copy',
                                 listener: function () {
-                                    console.log('Copy button clicked');
+                                    let colModel = gridVars.option("colModel");
+                                    let selectedRows = gridVars.getData().filter(e=>e.state);
+                                    if(selectedRows.length > 0){
+                                        let data = gridVars.getData();
+                                        selectedRows.forEach(row => {
+                                            row.state = false;
+
+                                            let clonedRow = _.cloneDeep(row);
+                                            colModel.forEach(col => {
+                                                if(col.properties?.prevent_copy_value){
+                                                    clonedRow[col.dataIndx] = col.properties?.default_value;
+                                                }
+                                            });
+                                            data.push(clonedRow);
+                                        });
+
+                                        gridVars.option("dataModel.data", data);
+                                        gridVars.refreshDataAndView();
+                                    } else {
+                                        alert('No rows selected to copy');
+                                    }
                                 }},
                         ]
                     },

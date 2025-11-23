@@ -45,3 +45,18 @@ input.pq-editor-focus.pq-cell-editor {
 .pq-grid-header-search-row .pq-grid-hd-search-field{
     min-width: unset;
 }
+.pq-grid-cell .form-check-input:before{
+    right: -1px;
+}
+.pq-grid-col .form-check-input:before {
+    right: 10px;
+}
+.pq-toolbar > * {
+    float: right;
+}
+.fa-solid, .fas{
+    font-family: "Font Awesome 6 Free" !important;
+}
+.fa-regular, .far {
+    font-family: "Font Awesome 6 Free" !important;
+}
