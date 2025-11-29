@@ -2,6 +2,8 @@ import json
 import webview
 import os
 import sys
+import threading
+import time
 from pathlib import Path
 from PyQt5.QtWidgets import QFileDialog, QApplication
 
@@ -100,6 +102,28 @@ class API:
         except OSError as exc:
             print(f"[open_folder] Failed to open '{candidate}': {exc}")
             return self.response(success=False, message='Failed to open: ' + str(candidate))
+
+    def call_js_function(self, function_name, *args):
+        args_json = ','.join([json.dumps(arg) for arg in args])
+        _webview_window.evaluate_js(f'''
+            window.{function_name}({args_json});
+        ''')
+
+    def start_script(self, callback):
+        """callback is the name of the callback function in index.html"""
+        try:
+            def run_script():
+                for i in range(1, 11):
+                    self.call_js_function(callback, {'current': i, 'total': 10, 'message': f'Processing step {i} of 10'})
+                    time.sleep(1.5)
+                self.call_js_function(callback, {'success': True, 'message': 'Script completed successfully', 'completed': True})
+            
+            script_thread = threading.Thread(target=run_script, daemon=True)
+            script_thread.start()
+            
+            return self.response(success=True, message='Script started')
+        except Exception as exc:
+            return self.response(success=False, message=f'Failed to start script: {exc}')
 
     def load_file(self):
         try:

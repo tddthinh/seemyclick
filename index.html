@@ -86,7 +86,7 @@
                 </div>
             </div>
             <div class="tab-pane fade" id="tab-log-content" role="tabpanel" aria-labelledby="tab-log-menu">
-                Tab 2 content
+                Coming soon...
             </div>
         </div>
         <div class="footer"></div>
@@ -107,6 +107,7 @@
         var gridActions;
         var gridVars;
         (function(user){
+            window.user = user;
             window.addEventListener('pywebviewready', function () {
                 user.initGridVars();
                 user.initGridActions();
@@ -116,10 +117,29 @@
                 user.bindEvents();
             });
         })({
+            start_script_callback: function(data) {
+                console.log('start_script_callback', data);
+                let {current, total, message} = data;
+                let rowList = [];
+                rowList.push({rowIndx: current, newRow: {running: true, count: 1, last_time: new Date().toISOString()}});
+                if(gridActions._previousRowIndx){
+                    rowList.push({rowIndx: gridActions._previousRowIndx, newRow: {running: false}});
+                }
+                gridActions._previousRowIndx = current;
+
+                gridActions.updateRow({rowList:rowList, checkEditable: false});
+
+            },
             bindEvents: function() {
                 let user = this;
                 $('#btnStart').on('click', function(evt) {
-                    console.log('Start button clicked');
+                    toast.show({
+                        type: 'success',
+                        title: 'Start Script',
+                        message: 'Script started',
+                        duration: 5000,
+                    });
+                    pywebview.api.start_script('user.start_script_callback');
                 });
                 $('#btnLoad').on('click', async function(evt) {
                     commonUI.showLoading();
@@ -337,7 +357,7 @@
                 
                 const actionTypeFields = {
                     wait: {
-                        required: { "function_image": 1 },
+                        required: { "image": 1 },
                         optional: {
                             "name": 1,
                             "window_title": 1,
@@ -353,7 +373,7 @@
                             "try_times": 1
                         }},
                     click: {
-                        required: { "function_image": 1 },
+                        required: { "image": 1 },
                         optional: {
                             "name": 1,
                             "window_title": 1,
@@ -465,7 +485,7 @@
                             "try_times": 1
                         }},
                     retry_group: {
-                        required: { "args_text": 1, "condition": 1 },
+                        required: { "condition": 1 },
                         optional: {
                             "name": 1,
                             "pre_delay": 1,
@@ -476,7 +496,7 @@
                             "try_times": 1
                         }},
                     call_function: {
-                        required: { "function_image": 1, "args_text": 1 },
+                        required: { "image": 1, "args_text": 1 },
                         optional: {
                             "name": 1,
                             "pre_delay": 1,
@@ -601,7 +621,7 @@
                         properties: { default_value: "click" },
                         render: renderCell},
 
-                    {   dataIndx: "function_image", title: "Function/Image",
+                    {   dataIndx: "image", title: "Function/Image",
                         width: 150,
                         editable: isEditable,
                         dataType: 'string',
