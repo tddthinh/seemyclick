@@ -3,7 +3,7 @@ Visual overlay for screenshot selection using PyQt5
 """
 from PyQt5.QtWidgets import (QApplication, QDialog, QLabel, QLineEdit, 
                               QPushButton, QVBoxLayout, QHBoxLayout, QFrame)
-from PyQt5.QtCore import Qt, QRect, QTimer, pyqtSignal, QObject
+from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QPixmap, QPainter, QPen, QColor, QFont, QImage
 from PIL import ImageGrab, Image
 from datetime import datetime

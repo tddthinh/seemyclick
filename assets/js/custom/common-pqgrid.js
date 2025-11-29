@@ -108,7 +108,7 @@ const commonPQGrid = {
             grid.on("expandDone",function(){
                 setTimeout(() => {
                     expand.apply(this,arguments);
-                }, 10);
+                }, 1);
             });
         },
         addCollapseEvent: function(grid){
@@ -119,7 +119,7 @@ const commonPQGrid = {
             grid.on("collapseDone",function(){
                 setTimeout(() => {
                     collapse.apply(this,arguments);
-                }, 10);
+                }, 1);
             });
         },
         apply: function(grid){

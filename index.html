@@ -57,15 +57,15 @@
                 </a>
               </li>
         </ul>
-        <div class="tab-content" id="tab-content">
-            <div class="tab-pane fade show active" id="tab-action-content" role="tabpanel" aria-labelledby="tab-action-menu">
-                <div class="grid-container flex-fill d-flex flex-column">
+        <div class="tab-content flex-fill" id="tab-content">
+            <div class="tab-pane fade show active h-100" id="tab-action-content" role="tabpanel" aria-labelledby="tab-action-menu">
+                <div class="grid-container d-flex flex-column h-100">
                     <div class="toolbar">
                         <div class="mt-1 d-flex align-items-start">
                             <button id="btnStart" type="button" class="btn btn-success me-1" data-mdb-ripple-init data-mdb-tooltip-init title="Start actions"><i class="fas fa-circle-play"></i> Start</button>
                             <button id="btnLoad" type="button" class="btn btn-primary me-1" data-mdb-ripple-init data-mdb-tooltip-init title="Load action file"><i class="fas fa-file-import"></i> Load</button>
                             <button id="btnSave" type="button" class="btn btn-primary me-1" data-mdb-ripple-init data-mdb-tooltip-init title="Save action file"><i class="fas fa-sd-card"></i> Save</button>
-                            <button id="btnSaveTo" type="button" class="btn btn-primary me-1" data-mdb-ripple-init data-mdb-tooltip-init title="Save to another action file"><i class="fas fa-file-export"></i> Save To..</button>
+                            <button id="btnSaveTo" type="button" class="btn btn-primary me-1" data-mdb-ripple-init data-mdb-tooltip-init title="Export to another action file"><i class="fas fa-file-export"></i> Export</button>
                         </div>
                         <div class="d-flex mt-3">
                             <div class="form-check me-3">
@@ -124,7 +124,7 @@
                     commonUI.showLoading();
                     let result = await pywebview.api.load_file();
                     if(!result.success){
-                        toast.error('Load File', result.message, 2500);
+                        toast.info('Load File', result.message, 2500);
                         commonUI.hideLoading();
                         return;
                     }
@@ -655,11 +655,13 @@
                     filterModel: { on: true, mode: "AND", header: true },
                     numberCell: { show: true },
                     title: "Actions",
-                    scrollModel: {autoFit: false},
+                    scrollModel: {autoFit: false, pace: 'fast'},
                     resizable: true,
                     swipeModel: {on: false},
                     wrap: false,
                     hwrap: false,
+                    virtualX: true,
+                    virtualY: true,
                     editModel: {clicksToEdit: 2},
                     collapsible: { on : false },
                     resizable: false,
@@ -672,7 +674,7 @@
                                     colModel.forEach(col => {
                                         newRow[col.dataIndx] = col.properties?.default_value;
                                     });
-                                    gridActions.addRow({newRow: newRow, refresh: false, checkEditable: false});
+                                    gridActions.addRow({newRow: newRow, refresh: true, checkEditable: false});
                                 }},
 
                             {   button: "delete",
@@ -690,7 +692,8 @@
                                     let colModel = gridActions.option("colModel");
                                     let selectedRows = gridActions.getData().filter(e=>e.state);
                                     if(selectedRows.length > 0){
-                                        let data = gridActions.getData();
+                                        let len = gridActions.getData().length;
+                                        let rowList = [];
                                         selectedRows.forEach(row => {
                                             row.state = false;
 
@@ -700,11 +703,10 @@
                                                     clonedRow[col.dataIndx] = col.properties?.default_value;
                                                 }
                                             });
-                                            data.push(clonedRow);
+                                            rowList.push({rowIndx: len++, newRow: clonedRow});
                                         });
 
-                                        gridActions.option("dataModel.data", data);
-                                        gridActions.refreshDataAndView();
+                                        gridActions.addRow({rowList:rowList});
                                     } else {
                                         alert('No rows selected to copy');
                                     }
@@ -712,10 +714,10 @@
 
                             {   button: "screenshot",
                                 listener: async function (evt) {
-                                    $button = $(evt.target);
-                                    $button.button("disable");
+                                    $button = $(evt.target).parent();
+                                    $button.attr('disabled','true');
                                     let result = await pywebview.api.capture_screenshot();
-                                    $button.button("enable");
+                                    $button.attr('disabled',null);
                                     if(!result.success){
                                         toast.info('Screenshot', 'No image saved', 2500);
                                         return;
@@ -853,7 +855,8 @@
                                     let colModel = gridVars.option("colModel");
                                     let selectedRows = gridVars.getData().filter(e=>e.state);
                                     if(selectedRows.length > 0){
-                                        let data = gridVars.getData();
+                                        let len = gridVars.getData().length;
+                                        let rowList = [];
                                         selectedRows.forEach(row => {
                                             row.state = false;
 
@@ -863,11 +866,10 @@
                                                     clonedRow[col.dataIndx] = col.properties?.default_value;
                                                 }
                                             });
-                                            data.push(clonedRow);
+                                            rowList.push({rowIndx: len++, newRow: clonedRow});
                                         });
 
-                                        gridVars.option("dataModel.data", data);
-                                        gridVars.refreshDataAndView();
+                                        gridVars.addRow({rowList:rowList});
                                     } else {
                                         alert('No rows selected to copy');
                                     }
