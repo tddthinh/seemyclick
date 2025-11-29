@@ -60,6 +60,7 @@
     color: #666666;
     user-select: text;
     cursor: text;
+    word-break: break-all;
 }
 
 .c-toast-buttons {

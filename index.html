@@ -65,7 +65,7 @@
                             <button id="btnStart" type="button" class="btn btn-success me-1" data-mdb-ripple-init data-mdb-tooltip-init title="Start actions"><i class="fas fa-circle-play"></i> Start</button>
                             <button id="btnLoad" type="button" class="btn btn-primary me-1" data-mdb-ripple-init data-mdb-tooltip-init title="Load action file"><i class="fas fa-file-import"></i> Load</button>
                             <button id="btnSave" type="button" class="btn btn-primary me-1" data-mdb-ripple-init data-mdb-tooltip-init title="Save action file"><i class="fas fa-sd-card"></i> Save</button>
-                            <button id="btnSaveTo" type="button" class="btn btn-primary me-1" data-mdb-ripple-init data-mdb-tooltip-init title="Export to another action file"><i class="fas fa-file-export"></i> Export</button>
+                            <button id="btnExportTo" type="button" class="btn btn-primary me-1" data-mdb-ripple-init data-mdb-tooltip-init title="Export to another action file"><i class="fas fa-file-export"></i> Export</button>
                         </div>
                         <div class="d-flex mt-3">
                             <div class="form-check me-3">
@@ -117,11 +117,13 @@
             });
         })({
             bindEvents: function() {
+                let user = this;
                 $('#btnStart').on('click', function(evt) {
                     console.log('Start button clicked');
                 });
                 $('#btnLoad').on('click', async function(evt) {
                     commonUI.showLoading();
+                    
                     let result = await pywebview.api.load_file();
                     if(!result.success){
                         toast.info('Load File', result.message, 2500);
@@ -139,7 +141,6 @@
                     let variables = content.variables || [];
                     gridVars.option("dataModel.data", variables);
                     gridVars.refreshDataAndView();
-                    commonUI.hideLoading();
 
                     let loopActions = content.loop || false;
                     $('#chkLoopActions').prop('checked', loopActions);
@@ -147,16 +148,84 @@
                     let refreshLog = content.refresh_log || false;
                     $('#chkRefreshLog').prop('checked', refreshLog);
 
+                    commonUI.hideLoading();
+
                     toast.show({
                         type: 'success',
                         title: 'Load File', message: `Loaded: ${actions.length} actions, ${variables.length} variables`, duration: 5000,
                     });
                 });
-                $('#btnSave').on('click', function(evt) {
-                    console.log('Save button clicked');
+                $('#btnSave').on('click', async function(evt) {
+                    commonUI.showLoading();
+
+                    let content = user.getSaveData();
+                    let result = await pywebview.api.save_file(content);
+                    if(!result.success){
+                        toast.info('Save File', result.message, 2500);
+                        commonUI.hideLoading();
+                        return;
+                    }
+
+                    commonUI.hideLoading();
+
+                    let path = result.data.path;
+                    toast.show({
+                        type: 'success',
+                        title: 'Save File',
+                        message: `Saved to ${path}`,
+                        duration: 5000,
+                        buttons: [
+                            {
+                                text: 'Open Folder',
+                                noDefaultClass: true,
+                                class: 'btn btn-secondary',
+                                attribute: "data-mdb-ripple-init",
+                                onClick: async function () {
+                                    let result = await pywebview.api.open_folder(path);
+                                    if(!result.success){
+                                        toast.error('Open Folder', result.message, 2500);
+                                        return;
+                                    }
+                                }
+                            },
+                        ]
+                    });
                 });
-                $('#btnSaveTo').on('click', function(evt) {
-                    console.log('Save To button clicked');
+                $('#btnExportTo').on('click', async function(evt) {
+                    commonUI.showLoading();
+
+                    let content = user.getSaveData();
+                    let result = await pywebview.api.export_file(content);
+                    if(!result.success){
+                        toast.info('Export File', result.message, 2500);
+                        commonUI.hideLoading();
+                        return;
+                    }
+
+                    commonUI.hideLoading();
+
+                    let path = result.data.path;
+                    toast.show({
+                        type: 'success',
+                        title: 'Export File',
+                        message: `Exported to ${path}`,
+                        duration: 5000,
+                        buttons: [
+                            {
+                                text: 'Open Folder',
+                                noDefaultClass: true,
+                                class: 'btn btn-secondary',
+                                attribute: "data-mdb-ripple-init",
+                                onClick: async function () {
+                                    let result = await pywebview.api.open_folder(path);
+                                    if(!result.success){
+                                        toast.error('Open Folder', result.message, 2500);
+                                        return;
+                                    }
+                                }
+                            },
+                        ]
+                    });
                 });
                 $('#chkLoopActions').on('change', function(evt) {
                     let checked = $(evt.target).is(':checked');
@@ -166,6 +235,14 @@
                     let checked = $(evt.target).is(':checked');
                     console.log('Refresh Log checkbox changed', checked);
                 });
+            },
+            getSaveData: function() {
+                return {
+                    "loop": $('#chkLoopActions').is(':checked'),
+                    "refresh_log": $('#chkRefreshLog').is(':checked'),
+                    "variables": gridVars.getData(),
+                    "actions": gridActions.getData(),
+                };
             },
             initGridActions: async function() {
                 function isEditable(ui) {

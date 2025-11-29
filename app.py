@@ -3,6 +3,7 @@ import webview
 import os
 import sys
 from pathlib import Path
+from PyQt5.QtWidgets import QFileDialog, QApplication
 
 # Set WebView2 user data folder to avoid permission issues
 webview_data_dir = os.path.join(os.getenv('TEMP'), 'webview_data')
@@ -101,8 +102,6 @@ class API:
             return self.response(success=False, message='Failed to open: ' + str(candidate))
 
     def load_file(self):
-        from PyQt5.QtWidgets import QFileDialog, QApplication
-
         try:
             app = QApplication.instance()
             if app is None:
@@ -127,10 +126,100 @@ class API:
             with open(file_path, 'r', encoding='utf-8') as json_file:
                 loaded = json.load(json_file)
 
+            self.file_path = file_path
+
             return self.response(success=True, message='File loaded', data={'path': file_path, 'content': loaded})
         except Exception as exc:
             return self.response(success=False, message=f'Failed to load file: {exc}')
     
+    def save_file(self, content):
+        path = self.file_path
+        with open(path, 'w', encoding='utf-8') as json_file:
+            self.dump_one_line_objects_per_line(content, out=json_file)
+        return self.response(success=True, message='File saved', data={'path': path})
+    
+    def export_file(self, content):
+        try:
+            app = QApplication.instance()
+            if app is None:
+                app = QApplication(sys.argv)
+
+            initial_dir = (APP_ROOT / 'json_example').resolve()
+            if not initial_dir.exists():
+                initial_dir = APP_ROOT
+            options = QFileDialog.Options()
+            file_path, _ = QFileDialog.getSaveFileName(
+                None,
+                'Export JSON file',
+                str(initial_dir),
+                'JSON Files (*.json)',
+                options=options
+            )
+            if not file_path:
+                return self.response(success=False, message='No file selected')
+            if not file_path.endswith('.json'):
+                file_path += '.json'
+            if not os.path.exists(os.path.dirname(file_path)):
+                os.makedirs(os.path.dirname(file_path))
+
+            with open(file_path, 'w', encoding='utf-8') as json_file:
+                self.dump_one_line_objects_per_line(content, out=json_file)
+            return self.response(success=True, message='File exported', data={'path': file_path})
+        except Exception as exc:
+            return self.response(success=False, message=f'Failed to export file: {exc}')
+        
+    def dump_one_line_objects_per_line(self, obj, indent=0, out=None):
+        class PathEncoder(json.JSONEncoder):
+            def default(self, obj):
+                return super().default(obj)
+
+            def encode(self, obj):
+                if isinstance(obj, str):
+                    # Preserve single backslashes in paths
+                    return f'"{obj}"'
+                return super().encode(obj)
+
+        pad = " " * indent
+        if isinstance(obj, dict):
+            out.write("{\n")
+            items = list(obj.items())
+            for i, (k, v) in enumerate(items):
+                out.write(
+                    pad
+                    + "  "
+                    + json.dumps(k, ensure_ascii=False, cls=PathEncoder)
+                    + ": "
+                )
+                if isinstance(v, list):
+                    out.write("[\n")
+                    for j, item in enumerate(v):
+                        out.write(pad + "    ")
+                        if isinstance(item, dict):
+                            out.write(
+                                json.dumps(
+                                    item,
+                                    ensure_ascii=False,
+                                    separators=(",", ": "),
+                                    cls=PathEncoder,
+                                )
+                            )
+                        else:
+                            out.write(
+                                json.dumps(item, ensure_ascii=False, cls=PathEncoder)
+                            )
+                        if j < len(v) - 1:
+                            out.write(",")
+                        out.write("\n")
+                    out.write(pad + "  ]")
+                else:
+                    out.write(json.dumps(v, ensure_ascii=False, cls=PathEncoder))
+                if i < len(items) - 1:
+                    out.write(",")
+                out.write("\n")
+            out.write(pad + "}")
+        else:
+            out.write(json.dumps(obj, ensure_ascii=False, cls=PathEncoder))
+
 APP_ROOT = Path(__file__).parent
 ENTRY = APP_ROOT / 'index.html'
 
